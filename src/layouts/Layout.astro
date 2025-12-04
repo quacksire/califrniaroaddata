@@ -1,5 +1,5 @@
 ---
-import '../styles/global.css';
+import "../styles/global.css";
 
 interface Props {
 	title: string;
@@ -24,14 +24,22 @@ const { title } = Astro.props;
 				<div class="flex items-center justify-between h-16">
 					<div class="flex items-center">
 						<a href="/" class="text-xl font-bold text-black">
-							Caltrans Cameras
+							California Road Data
 						</a>
 					</div>
 					<div class="flex space-x-4">
-						<a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black hover:text-white transition-colors">
+						<a
+							href="/"
+							class="px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black hover:text-white transition-colors"
+						>
 							Home
 						</a>
-						<a href="https://cwwp2.dot.ca.gov" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black hover:text-white transition-colors">
+						<a
+							href="https://cwwp2.dot.ca.gov"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black hover:text-white transition-colors"
+						>
 							Source
 						</a>
 					</div>
@@ -39,13 +47,20 @@ const { title } = Astro.props;
 			</div>
 		</nav>
 
-		<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+		<main
+			class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full"
+		>
 			<slot />
 		</main>
 
 		<footer class="border-t-2 border-black bg-white py-8 mt-auto">
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-black text-sm">
-				<p>Data provided by Caltrans. Not affiliated with the California Department of Transportation.</p>
+			<div
+				class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-black text-sm"
+			>
+				<p>
+					Data provided by Caltrans. Not affiliated with the
+					California Department of Transportation.
+				</p>
 			</div>
 		</footer>
 	</body>
