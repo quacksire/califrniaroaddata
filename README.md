@@ -1,46 +1,51 @@
-# Astro Starter Kit: Basics
+# California Road Data Explorer
 
-```sh
-npm create astro@latest -- --template basics
-```
+A modern web application for exploring California's road network data, built with Astro and React.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Features
 
-## 🚀 Project Structure
+- **Interactive Explorer**: Navigate through Caltrans districts, counties, and routes.
+- **Real-time Cameras**: View live traffic camera feeds using HLS streaming.
+- **Global Search**: Quickly find specific locations or routes.
+- **Responsive Design**: Built with Tailwind CSS for a seamless experience on all devices.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Tech Stack
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
+- **Framework**: [Astro](https://astro.build/)
+- **UI Library**: [React](https://react.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Video Player**: [hls.js](https://github.com/video-dev/hls.js)
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Getting Started
 
-## 🧞 Commands
+### Prerequisites
 
-All commands are run from the root of the project, from a terminal:
+- Node.js (v18 or higher recommended)
+- npm
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### Installation
 
-## 👀 Want to learn more?
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/quacksire/califrniaroaddata.git
+   cd califrniaroaddata
+   ```
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open your browser and navigate to `http://localhost:4321`.
+
+## Project Structure
+
+- `src/components`: React components for the UI (Explorer, DistrictSelector, HLSVideoPlayer, etc.)
+- `src/pages`: Astro pages and routing logic.
+- `src/utils`: Utility functions, including Caltrans data fetching.
+- `src/styles`: Global styles and Tailwind configuration.
