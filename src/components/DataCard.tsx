@@ -172,12 +172,12 @@ function CMSCard({ data }: { data: CMSItem }) {
     return (
         <CardWrapper location={location}>
             {isBlank ? (
-                <div className="bg-white border-2 border-black rounded-lg p-6 text-center text-black font-mono text-sm min-h-[120px] flex flex-col justify-center items-center">
+                <div className="bg-white border-2 border-black rounded-lg p-6 text-center text-black text-sm min-h-[120px] flex flex-col justify-center items-center">
                     <div className="mb-2">OFF</div>
                     <div>Sign is Blank</div>
                 </div>
             ) : (
-                <div className="bg-black border-2 border-black rounded-lg p-4 text-center font-mono text-yellow-500 font-bold tracking-wider min-h-[120px] flex flex-col justify-center">
+                <div className="bg-black border-2 border-black rounded-lg p-4 text-center text-yellow-500 font-bold tracking-wider min-h-[120px] flex flex-col justify-center">
                     <div className="leading-relaxed whitespace-pre-line min-h-[1.5em]">{line1 || '\u00A0'}</div>
                     <div className="leading-relaxed whitespace-pre-line min-h-[1.5em]">{line2 || '\u00A0'}</div>
                     <div className="leading-relaxed whitespace-pre-line min-h-[1.5em]">{line3 || '\u00A0'}</div>

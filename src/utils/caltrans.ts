@@ -1329,3 +1329,134 @@ export function getCounties(item: AnyDataItem): string[] {
 
     return counties.filter(c => c && c !== "Not Reported");
 }
+
+/**
+ * Sorting Logic
+ */
+
+// Helper to check if Chain Control is "active" (R-1, R-2, R-3, R-4) vs R-0 or Not Reported
+function getChainControlPriority(status: string | undefined): number {
+    if (!status) return -1;
+    if (status === 'R-4') return 4;
+    if (status === 'R-3') return 3;
+    if (status === 'R-2') return 2;
+    if (status === 'R-1') return 1;
+    if (status === 'R-0') return 0;
+    return -1;
+}
+
+// Helper to check if CMS has a message
+function hasCmsMessage(item: CMSItem): boolean {
+    const { message } = item.cms;
+    if (!message) return false;
+    if (message.display === 'Blank') return false;
+
+    // Check for actual text content
+    const p1 = message.phase1;
+    const p2 = message.phase2;
+
+    const hasTextPhase1 = (p: CmsPhase1) => {
+        if (!p) return false;
+        return (p.phase1Line1 || '').trim().length > 0 ||
+            (p.phase1Line2 || '').trim().length > 0 ||
+            (p.phase1Line3 || '').trim().length > 0;
+    };
+
+    const hasTextPhase2 = (p: CmsPhase2) => {
+        if (!p) return false;
+        return (p.phase2Line1 || '').trim().length > 0 ||
+            (p.phase2Line2 || '').trim().length > 0 ||
+            (p.phase2Line3 || '').trim().length > 0;
+    };
+
+    return (p1 && hasTextPhase1(p1)) || (p2 && hasTextPhase2(p2));
+}
+
+export function sortData(data: AnyDataItem[], type: DataTypeId): AnyDataItem[] {
+    return [...data].sort((a, b) => {
+        // 1. Chain Control
+        if (type === 'cc') {
+            const itemA = a as ChainControlItem;
+            const itemB = b as ChainControlItem;
+
+            // Priority: In Service > Status Level (R4...R0)
+            const inServiceA = itemA.cc.inService === 'true';
+            const inServiceB = itemB.cc.inService === 'true';
+
+            if (inServiceA !== inServiceB) return inServiceA ? -1 : 1;
+
+            const priorityA = getChainControlPriority(itemA.cc.statusData?.status);
+            const priorityB = getChainControlPriority(itemB.cc.statusData?.status);
+
+            if (priorityA !== priorityB) return priorityB - priorityA; // Descending (R4 first)
+        }
+
+        // 2. CCTV
+        if (type === 'cctv') {
+            const itemA = a as CCTVItem;
+            const itemB = b as CCTVItem;
+
+            const inServiceA = itemA.cctv.inService === 'true';
+            const inServiceB = itemB.cctv.inService === 'true';
+
+            if (inServiceA !== inServiceB) return inServiceA ? -1 : 1;
+
+            // Secondary: Has Image Data
+            const hasImageA = !!itemA.cctv.imageData?.static?.currentImageURL;
+            const hasImageB = !!itemB.cctv.imageData?.static?.currentImageURL;
+
+            if (hasImageA !== hasImageB) return hasImageA ? -1 : 1;
+        }
+
+        // 3. CMS
+        if (type === 'cms') {
+            const itemA = a as CMSItem;
+            const itemB = b as CMSItem;
+
+            const inServiceA = itemA.cms.inService === 'true';
+            const inServiceB = itemB.cms.inService === 'true';
+
+            if (inServiceA !== inServiceB) return inServiceA ? -1 : 1;
+
+            const hasMsgA = hasCmsMessage(itemA);
+            const hasMsgB = hasCmsMessage(itemB);
+
+            if (hasMsgA !== hasMsgB) return hasMsgA ? -1 : 1;
+        }
+
+        // 4. RWIS
+        if (type === 'rwis') {
+            const itemA = a as RWISItem;
+            const itemB = b as RWISItem;
+
+            const inServiceA = itemA.rwis.inService === 'true';
+            const inServiceB = itemB.rwis.inService === 'true';
+
+            if (inServiceA !== inServiceB) return inServiceA ? -1 : 1;
+        }
+
+        // 5. LCS
+        if (type === 'lcs') {
+            const itemA = a as LCSItem;
+            const itemB = b as LCSItem;
+
+            const isValidA = !!(itemA.lcs.location?.begin && itemA.lcs.closure);
+            const isValidB = !!(itemB.lcs.location?.begin && itemB.lcs.closure);
+
+            if (isValidA !== isValidB) return isValidA ? -1 : 1;
+        }
+
+        // 6. Travel Times
+        if (type === 'tt') {
+            const itemA = a as TTItem;
+            const itemB = b as TTItem;
+
+            const isValidA = !!(itemA.tt.location?.begin && itemA.tt.location?.end && itemA.tt.traveltime);
+            const isValidB = !!(itemB.tt.location?.begin && itemB.tt.location?.end && itemB.tt.traveltime);
+
+            if (isValidA !== isValidB) return isValidA ? -1 : 1;
+        }
+
+        return 0;
+    });
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getLocationName, getHighway, slugify, getNearbyPlaces, getCounties, type DataTypeId, type AnyDataItem } from '../utils/caltrans';
+import { getLocationName, getHighway, slugify, getNearbyPlaces, getCounties, sortData, type DataTypeId, type AnyDataItem } from '../utils/caltrans';
 import DataCard from './DataCard';
 
 interface Props {
@@ -63,7 +63,7 @@ export default function Explorer({ type, district, initialData }: Props) {
 
     // Filtering
     const filteredData = useMemo(() => {
-        return data.filter(item => {
+        const filtered = data.filter(item => {
             const name = getLocationName(item);
             const searchStr = searchFilter.toLowerCase();
 
@@ -97,6 +97,8 @@ export default function Explorer({ type, district, initialData }: Props) {
 
             return true;
         });
+
+        return sortData(filtered, type);
     }, [data, searchFilter, highwayFilter, nearbyFilter, countyFilter, type]);
 
     // Reset page when filters change
@@ -176,8 +178,7 @@ export default function Explorer({ type, district, initialData }: Props) {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {paginatedData.map((item, idx) => {
-                            console.log(item)
-                            const name = getLocationName(type, item);
+                            const name = getLocationName(item);
                             const slug = `/${type}/${district}/${slugify(name)}`;
                             return <DataCard key={idx} type={type} data={item} slug={slug} />;
                         })}
