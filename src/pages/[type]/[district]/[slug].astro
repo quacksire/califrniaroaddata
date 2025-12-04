@@ -1,0 +1,125 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import DataCard from "../../../components/DataCard";
+import {
+    DATA_TYPES,
+    DISTRICTS,
+    getApiUrl,
+    getLocationName,
+    slugify,
+    type DataTypeId,
+    type AnyDataItem,
+} from "../../../utils/caltrans";
+
+export async function getStaticPaths() {
+    const paths = [];
+
+    // Iterate over all types and districts to fetch data and generate paths
+    // Note: This might be slow for build time if there are many items.
+    // We will do it sequentially to avoid rate limiting or overwhelming the build.
+
+    for (const typeKey of Object.keys(DATA_TYPES)) {
+        const type = DATA_TYPES[typeKey as DataTypeId];
+        for (const districtId of type.districts) {
+            try {
+                const url = getApiUrl(typeKey as DataTypeId, districtId);
+                const res = await fetch(url);
+                if (!res.ok) continue;
+                const json = await res.json();
+                const data = json.data as AnyDataItem[];
+
+                if (data && Array.isArray(data)) {
+                    for (const item of data) {
+                        try {
+                            const name = getLocationName(
+                                typeKey as DataTypeId,
+                                item,
+                            );
+                            if (!name) continue;
+
+                            const slug = slugify(name);
+                            if (slug) {
+                                paths.push({
+                                    params: {
+                                        type: typeKey,
+                                        district: districtId,
+                                        slug,
+                                    },
+                                    props: {
+                                        item,
+                                        type: typeKey,
+                                        district: districtId,
+                                        name,
+                                    },
+                                });
+                            }
+                        } catch (err) {
+                            // Skip individual items that fail
+                            continue;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn(
+                    `Skipping ${typeKey} ${districtId}: ${(e as Error).message}`,
+                );
+            }
+        }
+    }
+    return paths;
+}
+
+const { item, type, district, name } = Astro.props;
+const dataType = DATA_TYPES[type as DataTypeId];
+const districtInfo = DISTRICTS.find((d) => d.id === district);
+---
+
+<Layout title={`${name} - ${dataType.name} - Caltrans Explorer`}>
+    <div class="mb-8">
+        <div class="flex items-center gap-2 text-sm text-slate-400 mb-4">
+            <a href="/" class="hover:text-brand-400 transition-colors">Home</a>
+            <span>/</span>
+            <a href={`/${type}`} class="hover:text-brand-400 transition-colors"
+                >{dataType.name}</a
+            >
+            <span>/</span>
+            <a
+                href={`/${type}/${district}`}
+                class="hover:text-brand-400 transition-colors"
+                >{districtInfo?.name}</a
+            >
+            <span>/</span>
+            <span class="text-slate-200 truncate max-w-[200px]">{name}</span>
+        </div>
+
+        <h1 class="text-3xl font-bold text-black mb-2 text-black">{name}</h1>
+        <p class="text-black">{dataType.name} in {districtInfo?.name}</p>
+    </div>
+
+    <div class="max-w-2xl mx-auto">
+        <div class="h-[400px]">
+            <DataCard
+                client:load
+                type={type as DataTypeId}
+                data={item as AnyDataItem}
+            />
+        </div>
+
+        <div
+            class="mt-8 p-6 bg-slate-800/30 rounded-xl border border-slate-700/50"
+        >
+            <h2 class="text-xl font-semibold text-slate-200 mb-4">Details</h2>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <dt class="text-slate-500">District</dt>
+                    <dd class="text-slate-200">{districtInfo?.name}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-500">Type</dt>
+                    <dd class="text-slate-200">{dataType.name}</dd>
+                </div>
+                {/* Add more specific details based on type if needed */}
+            </dl>
+        </div>
+    </div>
+</Layout>

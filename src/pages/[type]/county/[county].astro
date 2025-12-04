@@ -1,0 +1,92 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import Explorer from "../../../components/Explorer";
+import {
+    DATA_TYPES,
+    getApiUrl,
+    getCounties,
+    type DataTypeId,
+    type AnyDataItem,
+} from "../../../utils/caltrans";
+import { COUNTIES } from "../../../data/locations";
+
+export function getStaticPaths() {
+    const paths = [];
+    for (const typeKey of Object.keys(DATA_TYPES)) {
+        for (const county of COUNTIES) {
+            paths.push({
+                params: { type: typeKey, county },
+            });
+        }
+    }
+    return paths;
+}
+
+const { type, county } = Astro.params;
+const dataType = DATA_TYPES[type as DataTypeId];
+
+if (!dataType) {
+    return Astro.redirect("/404");
+}
+
+// Fetch data from ALL districts for this type
+let aggregatedData: AnyDataItem[] = [];
+const districts = dataType.districts;
+
+const fetchPromises = districts.map(async (districtId) => {
+    try {
+        const url = getApiUrl(type as DataTypeId, districtId);
+        const res = await fetch(url);
+        if (res.ok) {
+            const json = await res.json();
+            if (json && Array.isArray(json.data)) {
+                return json.data as AnyDataItem[];
+            }
+        }
+    } catch (e) {
+        console.error(`Failed to fetch data for ${type} ${districtId}`, e);
+    }
+    return [];
+});
+
+const results = await Promise.all(fetchPromises);
+aggregatedData = results.flat();
+
+// Filter by county
+const filteredData = aggregatedData.filter((item) => {
+    const itemCounties = getCounties(item);
+    // Caltrans data might be uppercase or have different casing
+    return itemCounties.some((c) => c.toLowerCase() === county.toLowerCase());
+});
+---
+
+<Layout title={`${dataType.name} - ${county} County`}>
+    <div class="mb-8">
+        <div class="flex items-center gap-2 text-sm text-black mb-4">
+            <a href="/" class="text-black transition-colors">Home</a>
+            <span>/</span>
+            <a href={`/${type}`} class="text-black">{dataType.name}</a>
+            <span>/</span>
+            <span class="text-black">{county} County</span>
+        </div>
+
+        <div
+            class="flex flex-col md:flex-row md:items-end justify-between gap-4"
+        >
+            <div>
+                <h1 class="text-3xl font-bold text-black">{dataType.name}</h1>
+                <p class="text-xl text-black">{county} County</p>
+            </div>
+            <div class="text-sm text-black">
+                Last Updated: {new Date().toLocaleString()}
+            </div>
+        </div>
+    </div>
+
+    <Explorer
+        client:load
+        type={type as DataTypeId}
+        district="All"
+        initialData={filteredData}
+    />
+</Layout>

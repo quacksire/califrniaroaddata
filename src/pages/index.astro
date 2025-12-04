@@ -1,0 +1,74 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { DATA_TYPES } from '../utils/caltrans';
+
+const cardData = [
+	{
+		id: 'cctv',
+		title: 'Highway Cameras',
+		description: 'The location and status of each Caltrans camera located on the State Highway Network.'
+	},
+	{
+		id: 'cms',
+		title: 'Changeable Message Signs',
+		description: 'All Roadway message signs (511, Traffic Status, Amber Alerts) located on the State Highway Network.'
+	},
+	{
+		id: 'cc',
+		title: 'Chain Control Signs',
+		description: 'The location and status of each Caltrans\' chain control point located on the State Highway Network.'
+	},
+	{
+		id: 'rwis',
+		title: 'Roadside Weather Information',
+		description: '150 weather sensors in rural areas and roads with reoccurring weather.'
+	},
+	{
+		id: 'lcs',
+		title: 'Lane Closures',
+		description: 'All approved closures planned for the next 7 days, plus all current lane, ramp, and road closures.'
+	},
+	{
+		id: 'tt',
+		title: 'Travel Times',
+		description: 'Caltrans travel time segments located on selected routes within the State Highway Network.'
+	}
+];
+---
+
+<Layout title="Caltrans Cameras">
+	<div class="max-w-6xl mx-auto">
+		<!-- Header -->
+		<div class="text-center mb-16">
+			<h1 class="text-5xl md:text-6xl font-bold mb-6 tracking-tight text-black">
+				Caltrans Cameras
+			</h1>
+			<p class="text-black text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
+				A consolidated collection of all public available cameras<br />
+				and other road related data in the state of California
+			</p>
+		</div>
+
+		<!-- Grid -->
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+			{cardData.map((card) => (
+				<a 
+					href={`/${card.id}`}
+					class="group relative bg-white border-2 border-black rounded-lg p-8 transition-all hover:shadow-lg"
+				>
+					<h2 class="text-xl font-bold mb-4 leading-tight text-black">
+						{card.title}
+					</h2>
+					
+					<p class="text-black text-sm leading-relaxed">
+						{card.description}
+					</p>
+					
+					<div class="mt-6 text-black text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+						Explore →
+					</div>
+				</a>
+			))}
+		</div>
+	</div>
+</Layout>

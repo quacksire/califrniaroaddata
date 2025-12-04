@@ -1,0 +1,47 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { DATA_TYPES, DISTRICTS, type DataTypeId } from "../../utils/caltrans";
+import { COUNTIES, ROUTES } from "../../data/locations";
+import DistrictSelector from "../../components/DistrictSelector";
+
+export function getStaticPaths() {
+  return Object.keys(DATA_TYPES).map((type) => ({
+    params: { type },
+  }));
+}
+
+const { type } = Astro.params;
+const dataType = DATA_TYPES[type as DataTypeId];
+
+if (!dataType) {
+  return Astro.redirect("/404");
+}
+
+const availableDistricts = DISTRICTS.filter((d) =>
+  (dataType.districts as readonly string[]).includes(d.id),
+);
+---
+
+<Layout title={`${dataType.name} - Caltrans Explorer`}>
+  <div class="mb-8">
+    <a
+      href="/"
+      class="text-black hover:underline transition-colors mb-4 inline-block"
+      >&larr; Back to Dashboard</a
+    >
+    <h1 class="text-4xl font-bold text-black mb-2">
+      {dataType.name}
+    </h1>
+    <p class="text-gray-600">
+      Select how you want to find ${dataType.name}
+    </p>
+  </div>
+
+  <DistrictSelector
+    client:load
+    type={type as string}
+    districts={availableDistricts}
+    counties={COUNTIES}
+    routes={ROUTES}
+  />
+</Layout>

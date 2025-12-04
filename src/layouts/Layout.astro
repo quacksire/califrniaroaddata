@@ -1,0 +1,52 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Caltrans Road Data Explorer" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body class="bg-white text-black min-h-screen flex flex-col">
+		<nav class="border-b-2 border-black bg-white sticky top-0 z-50">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex items-center justify-between h-16">
+					<div class="flex items-center">
+						<a href="/" class="text-xl font-bold text-black">
+							Caltrans Cameras
+						</a>
+					</div>
+					<div class="flex space-x-4">
+						<a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black hover:text-white transition-colors">
+							Home
+						</a>
+						<a href="https://cwwp2.dot.ca.gov" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black hover:text-white transition-colors">
+							Source
+						</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+			<slot />
+		</main>
+
+		<footer class="border-t-2 border-black bg-white py-8 mt-auto">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-black text-sm">
+				<p>Data provided by Caltrans. Not affiliated with the California Department of Transportation.</p>
+			</div>
+		</footer>
+	</body>
+</html>
