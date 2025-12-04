@@ -21,6 +21,8 @@ export default function LocationHeader({ location }: Props) {
     const nearbyPlace = location.nearbyPlace || location.beginNearbyPlace || '';
     const direction = location.direction || location.beginDirection || '';
 
+    // Get route from location name
+    // @ts-ignore
     const route = location?.route || getHighway(locationName)
 
     // Parse direction if not explicitly provided but present in name (e.g. "I-80 EB")

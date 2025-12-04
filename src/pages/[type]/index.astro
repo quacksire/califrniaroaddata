@@ -4,11 +4,8 @@ import { DATA_TYPES, DISTRICTS, type DataTypeId } from "../../utils/caltrans";
 import { COUNTIES, ROUTES } from "../../data/locations";
 import DistrictSelector from "../../components/DistrictSelector";
 
-export function getStaticPaths() {
-  return Object.keys(DATA_TYPES).map((type) => ({
-    params: { type },
-  }));
-}
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "public, max-age=86400");
 
 const { type } = Astro.params;
 const dataType = DATA_TYPES[type as DataTypeId];

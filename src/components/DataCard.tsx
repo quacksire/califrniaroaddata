@@ -53,7 +53,6 @@ function CardWrapper({ children, location }: { children: React.ReactNode; locati
 
 function CCTVCard({ data }: { data: CCTVItem }) {
     const { location, imageData } = data.cctv;
-    console.log(data);
 
     // Handle missing imageData
     if (!imageData || !imageData.static) {

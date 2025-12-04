@@ -9,18 +9,8 @@ import {
     type AnyDataItem,
 } from "../../utils/caltrans";
 
-export function getStaticPaths() {
-    const paths = [];
-    for (const typeKey of Object.keys(DATA_TYPES)) {
-        const type = DATA_TYPES[typeKey as DataTypeId];
-        for (const districtId of type.districts) {
-            paths.push({
-                params: { type: typeKey, district: districtId },
-            });
-        }
-    }
-    return paths;
-}
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "public, max-age=86400");
 
 const { type, district } = Astro.params;
 const dataType = DATA_TYPES[type as DataTypeId];
