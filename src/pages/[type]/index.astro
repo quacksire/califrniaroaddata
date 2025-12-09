@@ -41,4 +41,32 @@ const availableDistricts = DISTRICTS.filter((d) =>
     counties={COUNTIES}
     routes={ROUTES}
   />
+
+  <div class="mt-20 prose prose-slate max-w-none">
+    <h2 class="text-xl font-bold mb-3">Find {dataType.name} in California</h2>
+    <p>
+      Use the filters above to locate <strong
+        >{dataType.name.toLowerCase()}</strong
+      > by:
+    </p>
+    <ul class="list-disc pl-5">
+      <li>
+        <strong>County:</strong> Select from all 58 California counties (e.g., Alameda,
+        Los Angeles, Placer).
+      </li>
+      <li>
+        <strong>Route:</strong> Browse by major Interstate (I-5, I-80), State Route
+        (SR-1), or US Highway.
+      </li>
+      <li>
+        <strong>District:</strong> View regional data by Caltrans administrative
+        district.
+      </li>
+    </ul>
+    <p class="text-sm text-gray-500 mt-4">
+      All data is updated in real-time. {dataType.name} information is crucial for
+      safe navigation during winter storms, rush hour traffic, and road construction
+      projects.
+    </p>
+  </div>
 </Layout>

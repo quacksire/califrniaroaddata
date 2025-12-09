@@ -171,16 +171,30 @@ export default function Explorer({ type, district, initialData }: Props) {
             </div>
 
             {filteredData.length === 0 ? (
-                <div className="text-center py-12 text-black">
-                    No data found matching your filters.
+                <div className="bg-white border-2 border-black border-dashed rounded-xl p-12 text-center">
+                    <div className="text-4xl mb-4">🔍</div>
+                    <h3 className="text-xl font-bold mb-2">No matching results</h3>
+                    <p className="text-gray-600 mb-6">
+                        We couldn't find any items matching your current filters.
+                    </p>
+                    <button
+                        onClick={() => {
+                            setSearchFilter('');
+                            setHighwayFilter('');
+                            setNearbyFilter('');
+                            setCountyFilter('');
+                        }}
+                        className="px-6 py-2 bg-black text-white rounded-lg font-bold hover:bg-gray-800 transition-colors"
+                    >
+                        Clear All Filters
+                    </button>
                 </div>
             ) : (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {paginatedData.map((item, idx) => {
-                            const name = getLocationName(item);
-                            const slug = `/${type}/${district}/${slugify(name)}`;
-                            return <DataCard key={idx} type={type} data={item} slug={slug} />;
+                            // Pass undefined slug so DataCard generates the link itself
+                            return <DataCard key={idx} type={type} data={item} />;
                         })}
                     </div>
 

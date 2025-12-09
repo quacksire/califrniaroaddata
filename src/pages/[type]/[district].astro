@@ -5,6 +5,7 @@ import {
     DATA_TYPES,
     DISTRICTS,
     getApiUrl,
+    getCounties,
     type DataTypeId,
     type AnyDataItem,
 } from "../../utils/caltrans";
@@ -34,9 +35,28 @@ try {
 } catch (e) {
     console.error(`Failed to fetch data for ${type} ${district}`, e);
 }
+
+// SEO Logic
+const uniqueCounties = Array.from(
+    new Set(initialData.flatMap((item) => getCounties(item))),
+).sort();
+
+const countyListPhrase =
+    uniqueCounties.length > 0
+        ? `serving ${uniqueCounties.join(", ")} counties`
+        : "serving the region";
+
+const isCamera = type === "cctv";
+const typeKeywords = isCamera
+    ? "live regional cameras, Caltrans district video, traffic monitoring"
+    : `${dataType.name}, regional road status`;
+
+const title = `Live ${dataType.name} - ${districtInfo.name} | California Road Data`;
+
+const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates for ${districtInfo.name} (District ${district}), ${countyListPhrase}`;
 ---
 
-<Layout title={`${dataType.name} - ${districtInfo.name}`}>
+<Layout title={title}>
     <div class="mb-8">
         <div class="flex items-center gap-2 text-sm text-black mb-4">
             <a href="/" class="text-black transition-colors">Home</a>
@@ -50,8 +70,20 @@ try {
             class="flex flex-col md:flex-row md:items-end justify-between gap-4"
         >
             <div>
-                <h1 class="text-3xl font-bold text-black">{dataType.name}</h1>
-                <p class="text-xl text-black">{districtInfo.name}</p>
+                <h1 class="text-3xl font-bold text-black">
+                    {
+                        isCamera
+                            ? `Live Cameras: ${districtInfo.name}`
+                            : `${dataType.name}: ${districtInfo.name}`
+                    }
+                </h1>
+                <p class="text-xl text-black">
+                    {
+                        isCamera
+                            ? `Real-time views from District ${district}`
+                            : `Current ${dataType.name} status for District ${district}`
+                    }
+                </p>
             </div>
             <div class="text-sm text-black">
                 Last Updated: {new Date().toLocaleString()}
@@ -65,4 +97,21 @@ try {
         district={district as string}
         initialData={initialData}
     />
+
+    <div class="mt-12 prose prose-slate max-w-none">
+        <h2 class="text-xl font-bold mb-3">
+            About {dataType.name} in {districtInfo.name}
+        </h2>
+        <p>
+            View {seoDescription}. District {district} manages traffic safety across
+            a broad area, including major routes in <strong
+                >{uniqueCounties.join(", ")}</strong
+            >.
+        </p>
+        <p>
+            Monitor {typeKeywords} to distinguish local traffic conditions from regional
+            alerts. This data is sourced directly from district-level feeds.
+        </p>
+    </div>
 </Layout>
+```

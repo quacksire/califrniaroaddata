@@ -10,8 +10,21 @@ interface Props {
     slug?: string;
 }
 
+import { generateItemId, generateItemSlug } from '../utils/caltrans';
+
 export default function DataCard({ type, data, slug }: Props) {
     const content = (() => {
+        // Defensive check: ensure the data object actually contains the key for this type
+        // e.g. if type is 'cctv', data.cctv must exist
+        if (!data || !(type in data)) {
+            return (
+                <div className="bg-gray-50 border-2 border-gray-200 border-dashed rounded-lg p-4 text-gray-500 text-center h-full flex flex-col items-center justify-center gap-1">
+                    <span className="font-bold text-sm">Item Unavailable</span>
+                    <span className="text-xs opacity-75">Data source incomplete</span>
+                </div>
+            );
+        }
+
         switch (type) {
             case 'cctv':
                 return <CCTVCard data={data as CCTVItem} />;
@@ -30,14 +43,45 @@ export default function DataCard({ type, data, slug }: Props) {
         }
     })();
 
+    // If slug is provided, we are likely on the item page itself, so don't link.
     if (slug) {
         return (
             <div className="block h-full group">
                 {content}
-            </div   >
+            </div>
         );
     }
-    return content;
+
+    // Otherwise, generate link
+    // We need district ID. It's usually in location.district (number) or similar.
+    // Let's safe extract it.
+    let districtId: number | undefined;
+    const anyData = data as any;
+    if (anyData.cctv) districtId = anyData.cctv.location.district;
+    else if (anyData.cms) districtId = anyData.cms.location.district;
+    else if (anyData.cc) districtId = anyData.cc.location.district;
+    else if (anyData.rwis) districtId = anyData.rwis.location.district;
+    else if (anyData.lcs) districtId = anyData.lcs.location.begin?.beginDistrict; // specific for LCS
+    else if (anyData.tt) districtId = anyData.tt.location.begin?.beginDistrict; // specific for TT
+
+    if (districtId) {
+        const itemSlug = generateItemSlug(type, data);
+        const itemId = generateItemId(type, districtId, data);
+
+        if (itemSlug && itemId) {
+            return (
+                <a href={`/${itemSlug}/${itemId}`} className="block h-full group no-underline">
+                    {content}
+                </a>
+            );
+        }
+    }
+
+    return (
+        <div className="block h-full group">
+            {content}
+        </div>
+    );
 }
 
 function CardWrapper({ children, location }: { children: React.ReactNode; location: any }) {

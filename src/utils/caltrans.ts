@@ -1,16 +1,16 @@
 export const DISTRICTS = [
-    { id: '01', name: 'District 1 - Eureka' },
-    { id: '02', name: 'District 2 - Redding' },
-    { id: '03', name: 'District 3 - Marysville' },
-    { id: '04', name: 'District 4 - Bay Area' },
-    { id: '05', name: 'District 5 - San Luis Obispo' },
-    { id: '06', name: 'District 6 - Fresno' },
-    { id: '07', name: 'District 7 - Los Angeles' },
-    { id: '08', name: 'District 8 - San Bernardino' },
-    { id: '09', name: 'District 9 - Bishop' },
-    { id: '10', name: 'District 10 - Stockton' },
-    { id: '11', name: 'District 11 - San Diego' },
-    { id: '12', name: 'District 12 - Orange County' },
+    { id: '01', name: 'Eureka' },
+    { id: '02', name: 'Redding' },
+    { id: '03', name: 'Marysville' },
+    { id: '04', name: 'Bay Area' },
+    { id: '05', name: 'San Luis Obispo' },
+    { id: '06', name: 'Fresno' },
+    { id: '07', name: 'Los Angeles' },
+    { id: '08', name: 'San Bernardino' },
+    { id: '09', name: 'Bishop' },
+    { id: '10', name: 'Stockton' },
+    { id: '11', name: 'San Diego' },
+    { id: '12', name: 'Orange County' },
 ] as const;
 
 export type DistrictId = typeof DISTRICTS[number]['id'];
@@ -1459,4 +1459,37 @@ export function sortData(data: AnyDataItem[], type: DataTypeId): AnyDataItem[] {
 
         return 0;
     });
+}
+
+/**
+ * URL Hashing/Generation Helpers
+ */
+export function generateItemId(type: DataTypeId, districtId: string | number, item: any): string | null {
+    let index = '';
+    if (type === 'cctv') index = item?.cctv?.index;
+    else if (type === 'cms') index = item?.cms?.index;
+    else if (type === 'lcs') index = item?.lcs?.index;
+    else if (type === 'cc') index = item?.cc?.index;
+    else if (type === 'rwis') index = item?.rwis?.index;
+    else if (type === 'tt') index = item?.tt?.index;
+
+    if (!index) return null;
+
+    // Sanitize index
+    const safeIndex = String(index).replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-\.]/g, '');
+    // Ensure district is 2 digits
+    const d = String(districtId).padStart(2, '0');
+
+    return `${type}-d${d}-i${safeIndex}`;
+}
+
+export function generateItemSlug(type: DataTypeId, item: AnyDataItem): string {
+    const typeName = DATA_TYPES[type].name;
+    const locationName = getLocationName(item);
+
+    let s = slugify(`${locationName || "unknown"}-${typeName}`);
+    if (!s || s.length === 0) {
+        s = `unknown-${type}-item`;
+    }
+    return s;
 }

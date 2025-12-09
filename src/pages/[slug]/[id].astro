@@ -1,0 +1,259 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import DataCard from "../../components/DataCard";
+import {
+    DATA_TYPES,
+    type DataTypeId,
+    getLocationName,
+    generateItemId,
+    generateItemSlug,
+    DISTRICTS,
+    getHighwayFromItem,
+    getCounties,
+    slugify,
+} from "../../utils/caltrans";
+import RelatedActions from "../../components/RelatedActions";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+    const paths = [];
+
+    for (const [typeKey, typeConfig] of Object.entries(DATA_TYPES)) {
+        const type = typeKey as DataTypeId;
+
+        for (const districtId of typeConfig.districts) {
+            // Throttle slightly
+            await new Promise((resolve) => setTimeout(resolve, 50));
+
+            try {
+                const url = typeConfig.url(districtId);
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    console.warn(
+                        `[WARN] Fetch failed ${type} d${districtId}: ${response.status}`,
+                    );
+                    continue;
+                }
+
+                const text = await response.text();
+                if (!text || text.trim().startsWith("<")) {
+                    console.warn(
+                        `[WARN] Invalid JSON (HTML) for ${type} d${districtId}`,
+                    );
+                    continue;
+                }
+
+                let json;
+                try {
+                    json = JSON.parse(text);
+                } catch (e: any) {
+                    console.warn(
+                        `[WARN] JSON parse error for ${type} d${districtId}: ${e.message}`,
+                    );
+                    continue;
+                }
+
+                const items = json.data;
+                if (!Array.isArray(items)) continue;
+
+                for (const item of items) {
+                    const slug = generateItemSlug(type, item);
+                    const id = generateItemId(type, districtId, item);
+                    const locationName = getLocationName(item);
+
+                    if (!slug || !id) continue;
+
+                    paths.push({
+                        params: { slug, id },
+                        props: { item, type, locationName, districtId },
+                    });
+                }
+            } catch (error) {
+                console.error(
+                    `[ERROR] Processing ${type} d${districtId}:`,
+                    error,
+                );
+            }
+        }
+    }
+
+    return paths;
+}
+
+const { item, type, locationName, districtId } = Astro.props;
+const typeName = DATA_TYPES[type].name;
+const title = `${locationName || "Unknown Location"} | ${typeName} | California Road Data`;
+
+// SEO Helper logic
+const districtName =
+    DISTRICTS.find((d) => d.id === districtId)?.name ||
+    `District ${districtId}`;
+const highway = getHighwayFromItem(item);
+const counties = getCounties(item);
+const countyName = counties.length > 0 ? counties[0] : null;
+
+// Dynamic Keywords based on type
+const isCamera = type === "cctv";
+const typeKeywords = isCamera
+    ? "Caltrans CCTV, live traffic camera, highway surveillance, freeway webcam"
+    : `${typeName}, road conditions, Caltrans data, highway status`;
+
+const seoSentences = [
+    `View live ${isCamera ? "Caltrans traffic camera" : typeName.toLowerCase()} updates for ${locationName}.`,
+    countyName ? `Located in ${countyName} County, California.` : "",
+    highway ? `Monitoring real-time traffic conditions on ${highway}.` : "",
+    `Part of the Caltrans ${districtName} network.`,
+    `Check this page for ${isCamera ? "live CCTV images" : "current status"}, road closures, and ${typeKeywords}.`,
+]
+    .filter(Boolean)
+    .join(" ");
+
+// Helper to safely slugify for URLs (simple version matching explorer logic if possible, or use utility)
+// We already have slugify imported from utils
+const getRouteUrl = (h: string) => `/${type}/route/${slugify(h)}`;
+const getCountyUrl = (c: string) => `/${type}/county/${slugify(c)}`;
+const getDistrictUrl = (d: string) => `/${type}/${d}`;
+
+const relatedItems = {
+    district: {
+        id: districtId,
+        name: districtName,
+        url: getDistrictUrl(districtId),
+    },
+    county: countyName
+        ? {
+              name: countyName,
+              url: getCountyUrl(countyName),
+          }
+        : undefined,
+    highway: highway
+        ? {
+              name: highway,
+              url: getRouteUrl(highway),
+          }
+        : undefined,
+};
+---
+
+<Layout title={title}>
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="mb-6">
+                <a
+                    href="/"
+                    class="text-blue-600 hover:underline mb-2 inline-block"
+                    >&larr; Back to Home</a
+                >
+                <h1 class="text-3xl font-bold mb-2 text-black">
+                    {locationName || "Unknown Location"}
+                </h1>
+                <div class="flex items-center gap-2 text-gray-600">
+                    <span
+                        class="px-2 py-1 bg-gray-100 rounded text-sm border border-gray-200"
+                        >{typeName}</span
+                    >
+                    <span
+                        class="px-2 py-1 bg-gray-100 rounded text-sm border border-gray-200"
+                        >District {districtId}</span
+                    >
+                </div>
+            </div>
+
+            <div class="w-full">
+                <DataCard
+                    client:only="react"
+                    type={type}
+                    data={item}
+                    slug={Astro.params.slug}
+                />
+            </div>
+
+            {/* Related Actions / CTAs */}
+            <RelatedActions client:idle type={typeName} items={relatedItems} />
+
+            <div class="mt-8 prose prose-slate max-w-none">
+                <h2 class="text-xl font-bold mb-3">
+                    {
+                        isCamera
+                            ? `Live Caltrans Camera at ${locationName}`
+                            : `${typeName} on ${highway || locationName}`
+                    }
+                </h2>
+                <p>{seoSentences}</p>
+
+                <p>
+                    {
+                        `Here’s the current ${typeName.toLowerCase()} status for ${locationName}`
+                    }
+                    {countyName && ` in ${countyName} County`}
+                    {highway && ` along ${highway}`}
+                    {
+                        `. This page provides live updates on road conditions, closures, and incidents to help you plan your trip.`
+                    }
+                </p>
+
+                <h3 class="text-lg font-semibold mt-6 mb-2">
+                    About this location
+                </h3>
+                <ul class="list-disc pl-5 space-y-1">
+                    {
+                        countyName && (
+                            <li>
+                                <strong>County:</strong> {countyName}
+                            </li>
+                        )
+                    }
+                    <li><strong>District:</strong> {districtName}</li>
+                    {
+                        highway && (
+                            <li>
+                                <strong>Route:</strong> {highway}
+                            </li>
+                        )
+                    }
+                    <li><strong>Type:</strong> {typeName}</li>
+                </ul>
+
+                <h3 class="text-lg font-semibold mt-6 mb-2">
+                    Why check {typeName.toLowerCase()}?
+                </h3>
+                <p>
+                    Real-time {typeName.toLowerCase()} data is essential for planning
+                    your trip. Whether you are commuting, traveling for holidays,
+                    or navigating through weather conditions, staying informed helps
+                    you avoid congestion and travel safely. This page provides the
+                    latest available {
+                        isCamera
+                            ? "visual confirmation of road conditions"
+                            : "status updates"
+                    } directly from Caltrans devices.
+                </p>
+
+                <h3 class="text-lg font-semibold mt-6 mb-2">
+                    California Traffic Resources
+                </h3>
+                <p>
+                    In addition to this {typeName.toLowerCase()} feed, motorists
+                    can monitor highway conditions using the Caltrans QuickMap, check
+                    for chain controls in mountain regions like Tahoe and Mammoth,
+                    and stay alert for hazardous road conditions reported by the
+                    CHP. Always rely on official sources for the most critical safety
+                    alerts.
+                </p>
+
+                <p class="mt-4 text-sm text-gray-600">
+                    This page automatically updates with the latest available
+                    road information as part of the California Road Data
+                    project.
+                </p>
+            </div>
+
+            <div class="mt-8 text-sm text-gray-500 border-t pt-4">
+                <p>Last updated: {new Date().toLocaleString()}</p>
+                <p class="mt-1">ID: {Astro.params.id}</p>
+            </div>
+        </div>
+    </main>
+</Layout>

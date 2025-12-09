@@ -5,6 +5,7 @@ import {
     DATA_TYPES,
     getApiUrl,
     getCounties,
+    getHighwayFromItem,
     type DataTypeId,
     type AnyDataItem,
 } from "../../../utils/caltrans";
@@ -58,9 +59,33 @@ const filteredData = aggregatedData.filter((item) => {
     // Caltrans data might be uppercase or have different casing
     return itemCounties.some((c) => c.toLowerCase() === county.toLowerCase());
 });
+
+// SEO Logic
+const uniqueRoutes = Array.from(
+    new Set(
+        filteredData.map((item) => getHighwayFromItem(item)).filter(Boolean),
+    ),
+).sort((a, b) => {
+    // Natural sort for routes (e.g. 101, 280) if possible, or simple alphabetical
+    return (a || "").localeCompare(b || "", undefined, { numeric: true });
+});
+
+const routeListPhrase =
+    uniqueRoutes.length > 0
+        ? `including ${uniqueRoutes.slice(0, 15).join(", ")}${uniqueRoutes.length > 15 ? " and more" : ""}`
+        : "across the region";
+
+const isCamera = type === "cctv";
+const typeKeywords = isCamera
+    ? "live traffic cameras, Caltrans CCTV, freeway webcams"
+    : `${dataType.name}, road conditions, highway status`;
+
+const title = `Live ${dataType.name} in ${county} County | California Road Data`;
+
+const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates for all highways in ${county} County, ${routeListPhrase}`;
 ---
 
-<Layout title={`${dataType.name} - ${county} County`}>
+<Layout title={title}>
     <div class="mb-8">
         <div class="flex items-center gap-2 text-sm text-black mb-4">
             <a href="/" class="text-black transition-colors">Home</a>
@@ -74,8 +99,20 @@ const filteredData = aggregatedData.filter((item) => {
             class="flex flex-col md:flex-row md:items-end justify-between gap-4"
         >
             <div>
-                <h1 class="text-3xl font-bold text-black">{dataType.name}</h1>
-                <p class="text-xl text-black">{county} County</p>
+                <h1 class="text-3xl font-bold text-black">
+                    {
+                        isCamera
+                            ? `Live Cameras: ${county} County`
+                            : `${dataType.name}: ${county} County`
+                    }
+                </h1>
+                <p class="text-xl text-black">
+                    {
+                        isCamera
+                            ? `Real-time views from ${county} County highways`
+                            : `Current ${dataType.name} status for ${county} County`
+                    }
+                </p>
             </div>
             <div class="text-sm text-black">
                 Last Updated: {new Date().toLocaleString()}
@@ -89,4 +126,26 @@ const filteredData = aggregatedData.filter((item) => {
         district="All"
         initialData={filteredData}
     />
+
+    <div class="mt-12 prose prose-slate max-w-none">
+        <h2 class="text-xl font-bold mb-3">
+            About {dataType.name} in {county} County
+        </h2>
+        <p>
+            View {seoDescription}. Whether you are commuting through {county} County
+            or traveling long-distance, these {typeKeywords} provide vital information
+            for a safe trip.
+        </p>
+        <p>
+            Data is sourced directly from Caltrans and includes coverage of
+            major routes and local highways within the county,
+            {
+                uniqueRoutes.length > 0
+                    ? `specifically monitoring ${uniqueRoutes.join(", ")}.`
+                    : "covering key transit arteries."
+            }
+            Check back for latest updates on congestion, weather impacts, and road
+            work.
+        </p>
+    </div>
 </Layout>

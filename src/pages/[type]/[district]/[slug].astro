@@ -7,9 +7,12 @@ import {
     getApiUrl,
     getLocationName,
     slugify,
+    getHighwayFromItem,
+    getCounties,
     type DataTypeId,
     type AnyDataItem,
 } from "../../../utils/caltrans";
+import RelatedActions from "../../../components/RelatedActions";
 
 export async function getStaticPaths() {
     const paths = [];
@@ -31,10 +34,7 @@ export async function getStaticPaths() {
                 if (data && Array.isArray(data)) {
                     for (const item of data) {
                         try {
-                            const name = getLocationName(
-                                typeKey as DataTypeId,
-                                item,
-                            );
+                            const name = getLocationName(item);
                             if (!name) continue;
 
                             const slug = slugify(name);
@@ -72,9 +72,38 @@ export async function getStaticPaths() {
 const { item, type, district, name } = Astro.props;
 const dataType = DATA_TYPES[type as DataTypeId];
 const districtInfo = DISTRICTS.find((d) => d.id === district);
+
+// Data Context for SEO & Navigation
+const highwayName = getHighwayFromItem(item);
+const counties = getCounties(item);
+const countyName = counties.length > 0 ? counties[0] : undefined;
+
+const title = `${name} | ${dataType.name} ${highwayName ? `on ${highwayName}` : ""} | California Road Data`;
+
+const relatedItems = {
+    district: {
+        id: district,
+        name: districtInfo?.name || `District ${district}`,
+        url: `/${type}/${district}`,
+    },
+    county: countyName
+        ? {
+              name: countyName,
+              url: `/${type}/county/${encodeURIComponent(countyName)}`,
+          }
+        : undefined,
+    highway: highwayName
+        ? {
+              name: highwayName,
+              url: `/${type}/route/${encodeURIComponent(highwayName)}`,
+          }
+        : undefined,
+};
+
+const seoDescription = `Current ${dataType.name.toLowerCase()} status at ${name}${highwayName ? `, located on ${highwayName}` : ""}${countyName ? ` in ${countyName} County` : ""}. Real-time data from Caltrans District ${district}.`;
 ---
 
-<Layout title={`${name} - ${dataType.name} - Caltrans Explorer`}>
+<Layout title={title}>
     <div class="mb-8">
         <div class="flex items-center gap-2 text-sm text-slate-400 mb-4">
             <a href="/" class="hover:text-brand-400 transition-colors">Home</a>
@@ -96,7 +125,7 @@ const districtInfo = DISTRICTS.find((d) => d.id === district);
         <p class="text-black">{dataType.name} in {districtInfo?.name}</p>
     </div>
 
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-4xl mx-auto">
         <div class="h-[400px]">
             <DataCard
                 client:load
@@ -105,21 +134,42 @@ const districtInfo = DISTRICTS.find((d) => d.id === district);
             />
         </div>
 
-        <div
-            class="mt-8 p-6 bg-slate-800/30 rounded-xl border border-slate-700/50"
-        >
-            <h2 class="text-xl font-semibold text-slate-200 mb-4">Details</h2>
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div>
-                    <dt class="text-slate-500">District</dt>
-                    <dd class="text-slate-200">{districtInfo?.name}</dd>
-                </div>
-                <div>
-                    <dt class="text-slate-500">Type</dt>
-                    <dd class="text-slate-200">{dataType.name}</dd>
-                </div>
-                {/* Add more specific details based on type if needed */}
-            </dl>
+        <div class="mt-12 prose prose-slate max-w-none">
+            <h2 class="text-xl font-bold mb-3">About this Data Point</h2>
+            <p>
+                You are viewing {seoDescription}
+            </p>
+            <p>
+                <strong>{name}</strong> is a specific data collection point maintained
+                by Caltrans District {district} ({districtInfo?.name}). This
+                page provides a focused view of the live feed, ensuring you have
+                the latest information for this exact location.
+            </p>
+            <p>
+                To see more updates nearby, use the buttons above to view all {
+                    dataType.name.toLowerCase()
+                } units
+                {
+                    highwayName ? (
+                        <span>
+                            {" "}
+                            along <strong>{highwayName}</strong>
+                        </span>
+                    ) : (
+                        ""
+                    )
+                }
+                {
+                    countyName ? (
+                        <span>
+                            {" "}
+                            or within <strong>{countyName} County</strong>
+                        </span>
+                    ) : (
+                        ""
+                    )
+                }.
+            </p>
         </div>
     </div>
 </Layout>
