@@ -4,6 +4,8 @@ import {
     getHighwayFromItem,
     getCounties,
 } from "../utils/caltrans";
+import { site } from "astro:config/server";
+
 
 export const prerender = true;
 
@@ -154,6 +156,7 @@ export async function GET() {
     const sortedCounties = Array.from(allCounties).sort();
     const sortedHighways = Array.from(allHighways).sort();
 
+
     // 2. Build the text content
     const content = `
 # California Road Data - LLM Navigation Guide
@@ -165,18 +168,18 @@ Use the following URL patterns to locate specific resources.
 ## URL Patterns
 
 ### By Geographic Region (County)
-Pattern: https://californiaroad.data/[type]/county/[county-slug]
-Example: https://californiaroad.data/cctv/county/san-mateo
+Pattern: ${site}/[type]/county/[county-slug]
+Example: ${site}/cctv/county/san-mateo
 Types: cctv, cms, cc (chain control), lcs (lane closures), rwis (weather), tt (travel times)
 
 ### By Highway / Route
-Pattern: https://californiaroad.data/[type]/route/[highway-slug]
-Example: https://californiaroad.data/cctv/route/us-101
+Pattern: ${site}/[type]/route/[highway-slug]
+Example: ${site}/cctv/route/us-101
 Note: Use "us-101", "i-5", "sr-1" formats.
 
 ### By District
-Pattern: https://californiaroad.data/[type]/[district-id]
-Example: https://californiaroad.data/cctv/04
+Pattern: ${site}/[type]/[district-id]
+Example: ${site}/cctv/04
 Districts: 01 through 12.
 
 ## Reference Lists
