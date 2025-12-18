@@ -10,7 +10,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://californiaroad.data', // Placeholder URL for sitemap generation
+  site: 'https://crd.samjeffs.net', // Placeholder URL for sitemap generation
   integrations: [react(), sitemap()],
 
   vite: {
