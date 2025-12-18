@@ -19,7 +19,7 @@ export const DATA_TYPES = {
     cc: {
         id: 'cc',
         name: 'Chain Controls',
-        districts: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'], // 1-11
+        districts: ['01', '02', '03', '06', '07', '08', '09', '10', '11'], // 1-11
         url: (d: string) => `https://cwwp2.dot.ca.gov/data/d${parseInt(d)}/cc/ccStatusD${d}.json`,
     },
     cctv: {
@@ -43,7 +43,7 @@ export const DATA_TYPES = {
     rwis: {
         id: 'rwis',
         name: 'Weather Stations',
-        districts: ['02', '03', '06', '08', '09', '10'], // 2, 3, 6, 8, 9, 10
+        districts: ['02', '03', '06', '08', '09'], // 2, 3, 6, 8, 9, 10
         url: (d: string) => `https://cwwp2.dot.ca.gov/data/d${parseInt(d)}/rwis/rwisStatusD${d}.json`,
     },
     tt: {

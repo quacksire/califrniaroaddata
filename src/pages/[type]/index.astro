@@ -4,7 +4,7 @@ import { DATA_TYPES, DISTRICTS, type DataTypeId } from "../../utils/caltrans";
 import { COUNTIES, ROUTES } from "../../data/locations";
 import DistrictSelector from "../../components/DistrictSelector";
 
-export const prerender = false;
+export const prerender = true;
 Astro.response.headers.set("Cache-Control", "public, max-age=86400");
 
 const { type } = Astro.params;
@@ -17,6 +17,12 @@ if (!dataType) {
 const availableDistricts = DISTRICTS.filter((d) =>
   (dataType.districts as readonly string[]).includes(d.id),
 );
+
+export function getStaticPaths() {
+  // Return a static path for each data type key (e.g. /cctv, /cc, /cms)
+  return Object.keys(DATA_TYPES).map((typeKey) => ({params: {type: typeKey}}));
+}
+
 ---
 
 <Layout title={`${dataType.name} - Caltrans Explorer`}>
