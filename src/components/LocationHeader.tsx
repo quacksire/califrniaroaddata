@@ -10,10 +10,13 @@ interface Props {
         beginNearbyPlace?: string;
         direction?: string;
         beginDirection?: string;
+        route?: string;
     }
+    titleId?: string;
+    descId?: string;
 }
 
-export default function LocationHeader({ location }: Props) {
+export default function LocationHeader({ location, titleId, descId }: Props) {
     if (!location) return null;
 
     // Handle different location name fields
@@ -34,21 +37,32 @@ export default function LocationHeader({ location }: Props) {
         else if (locationName.includes(' WB')) parsedDirection = 'West';
     }
 
+    // Build an accessible description string for screen readers
+    const accessibleParts = [] as string[];
+    if (locationName) accessibleParts.push(locationName);
+    if (nearbyPlace && nearbyPlace !== locationName) accessibleParts.push(`near ${nearbyPlace}`);
+    if (parsedDirection) accessibleParts.push(`${parsedDirection}bound`);
+    if (route) accessibleParts.push(`route ${route}`);
+    const accessibleDescription = accessibleParts.join(', ');
+
     return (
         <div className="p-4 border-b-2 border-black bg-white flex items-center gap-3">
             {route && (
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                     <Shield route={route} width={40} height={40} />
                 </div>
             )}
-            <div className="flex-grow min-w-0">
-                <h3 className="font-semibold text-black truncate" title={nearbyPlace || locationName}>
+            <div className="grow min-w-0">
+                <h3 id={titleId} className="font-semibold text-black truncate" title={nearbyPlace || locationName}>
                     {nearbyPlace || locationName}
                 </h3>
                 {parsedDirection && (
                     <p className="text-xs text-black">
                         {parsedDirection}bound
                     </p>
+                )}
+                {descId && (
+                    <span id={descId} className="sr-only">{accessibleDescription}</span>
                 )}
             </div>
         </div>
