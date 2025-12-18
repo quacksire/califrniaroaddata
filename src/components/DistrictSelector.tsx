@@ -42,8 +42,8 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                         : 'bg-white text-black border-black hover:bg-gray-50'
                         }`}
                 >
-                    <h3 className="text-xl font-bold mb-2 font-mono">Choose By County</h3>
-                    <p className="text-sm opacity-80 font-mono">Grab cameras from a specified county</p>
+                    <h3 className="text-xl font-bold mb-2 ">Choose By County</h3>
+                    <p className="text-sm opacity-80 ">Grab cameras from a specified county</p>
                 </button>
                 <button
                     onClick={() => setActiveTab('district')}
@@ -52,13 +52,13 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                         : 'bg-white text-black border-black hover:bg-gray-50'
                         }`}
                 >
-                    <h3 className="text-xl font-bold mb-2 font-mono">Choose By District</h3>
-                    <p className="text-sm opacity-80 font-mono">Grab cameras from a Caltrans district</p>
+                    <h3 className="text-xl font-bold mb-2 ">Choose By District</h3>
+                    <p className="text-sm opacity-80 ">Grab cameras from a Caltrans district</p>
                 </button>
             </div>
 
             {/* Content */}
-            <div className="bg-white rounded-xl border-2 border-black p-6 min-h-[400px]">
+            <div className="bg-white rounded-xl border-2 border-black p-6 min-h-100">
                 {activeTab === 'district' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {districts.map((district) => (
@@ -71,7 +71,7 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                                     {district.id}
                                 </div>
                                 <div className="ml-4">
-                                    <h3 className="font-bold font-mono">{district.name}</h3>
+                                    <h3 className="font-bold ">{district.name}</h3>
                                 </div>
                                 <div className="ml-auto font-bold">
                                     &rarr;
@@ -87,7 +87,7 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                             <a
                                 key={county}
                                 href={`/${type}/county/${encodeURIComponent(county)}`}
-                                className="p-4 bg-white border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all text-center font-bold font-mono"
+                                className="p-4 bg-white border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all text-center font-bold "
                             >
                                 {county}
                             </a>
@@ -98,7 +98,7 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                 {activeTab === 'route' && (
                     <div className="space-y-8">
                         <div>
-                            <h3 className="text-lg font-bold mb-4 font-mono border-b-2 border-black pb-2">Interstate Highways</h3>
+                            <h3 className="text-lg font-bold mb-4  border-b-2 border-black pb-2">Interstate Highways</h3>
                             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
                                 {interstates.map(route => (
                                     <a key={route} href={`/${type}/route/${route}`} className="flex justify-center hover:scale-110 transition-transform" title={`View ${route}`}>
@@ -108,7 +108,7 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold mb-4 font-mono border-b-2 border-black pb-2">US Highways</h3>
+                            <h3 className="text-lg font-bold mb-4  border-b-2 border-black pb-2">US Highways</h3>
                             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
                                 {usHighways.map(route => (
                                     <a key={route} href={`/${type}/route/${route}`} className="flex justify-center hover:scale-110 transition-transform" title={`View ${route}`}>
@@ -118,7 +118,7 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold mb-4 font-mono border-b-2 border-black pb-2">State Routes</h3>
+                            <h3 className="text-lg font-bold mb-4  border-b-2 border-black pb-2">State Routes</h3>
                             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4">
                                 {stateRoutes.map(route => (
                                     <a key={route} href={`/${type}/route/${route}`} className="flex justify-center hover:scale-110 transition-transform" title={`View ${route}`}>
