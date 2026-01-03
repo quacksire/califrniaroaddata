@@ -118,15 +118,15 @@ const seoDescription = `Current ${dataType.name.toLowerCase()} status at ${name}
                 >{districtInfo?.name}</a
             >
             <span>/</span>
-            <span class="text-slate-200 truncate max-w-[200px]">{name}</span>
+            <span class="text-slate-200 truncate max-w-50">{name}</span>
         </div>
 
-        <h1 class="text-3xl font-bold text-black mb-2 text-black">{name}</h1>
+        <h1 class="text-3xl font-bold text-black mb-2">{name}</h1>
         <p class="text-black">{dataType.name} in {districtInfo?.name}</p>
     </div>
 
     <div class="max-w-4xl mx-auto">
-        <div class="h-[400px]">
+        <div class="h-100">
             <DataCard
                 client:load
                 type={type as DataTypeId}

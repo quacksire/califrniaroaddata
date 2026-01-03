@@ -6,6 +6,7 @@ import {
     getApiUrl,
     getCounties,
     getHighwayFromItem,
+    slugify,
     type DataTypeId,
     type AnyDataItem,
 } from "../../../utils/caltrans";
@@ -16,19 +17,23 @@ export function getStaticPaths() {
     for (const typeKey of Object.keys(DATA_TYPES)) {
         for (const county of COUNTIES) {
             paths.push({
-                params: { type: typeKey, county },
+                params: { type: typeKey, county: slugify(county) },
             });
         }
     }
     return paths;
 }
 
-const { type, county } = Astro.params;
+const { type, county: countySlug } = Astro.params;
 const dataType = DATA_TYPES[type as DataTypeId];
 
 if (!dataType) {
     return Astro.redirect("/404");
 }
+
+// Find the formal county name from the slug
+const formalCounty =
+    COUNTIES.find((c) => slugify(c) === countySlug) || countySlug;
 
 // Fetch data from ALL districts for this type
 let aggregatedData: AnyDataItem[] = [];
@@ -53,11 +58,10 @@ const fetchPromises = districts.map(async (districtId) => {
 const results = await Promise.all(fetchPromises);
 aggregatedData = results.flat();
 
-// Filter by county
+// Filter by county using slugified comparison for robustness
 const filteredData = aggregatedData.filter((item) => {
     const itemCounties = getCounties(item);
-    // Caltrans data might be uppercase or have different casing
-    return itemCounties.some((c) => c.toLowerCase() === county.toLowerCase());
+    return itemCounties.some((c) => slugify(c) === countySlug);
 });
 
 // SEO Logic
@@ -80,9 +84,9 @@ const typeKeywords = isCamera
     ? "live traffic cameras, Caltrans CCTV, freeway webcams"
     : `${dataType.name}, road conditions, highway status`;
 
-const title = `Live ${dataType.name} in ${county} County | California Road Data`;
+const title = `Live ${dataType.name} in ${formalCounty} County | California Road Data`;
 
-const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates for all highways in ${county} County, ${routeListPhrase}`;
+const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates for all highways in ${formalCounty} County, ${routeListPhrase}`;
 ---
 
 <Layout title={title}>
@@ -92,7 +96,7 @@ const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates
             <span>/</span>
             <a href={`/${type}`} class="text-black">{dataType.name}</a>
             <span>/</span>
-            <span class="text-black">{county} County</span>
+            <span class="text-black">{formalCounty} County</span>
         </div>
 
         <div
@@ -102,15 +106,15 @@ const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates
                 <h1 class="text-3xl font-bold text-black">
                     {
                         isCamera
-                            ? `Live Cameras: ${county} County`
-                            : `${dataType.name}: ${county} County`
+                            ? `Live Cameras: ${formalCounty} County`
+                            : `${dataType.name}: ${formalCounty} County`
                     }
                 </h1>
                 <p class="text-xl text-black">
                     {
                         isCamera
-                            ? `Real-time views from ${county} County highways`
-                            : `Current ${dataType.name} status for ${county} County`
+                            ? `Real-time views from ${formalCounty} County highways`
+                            : `Current ${dataType.name} status for ${formalCounty} County`
                     }
                 </p>
             </div>
@@ -129,10 +133,10 @@ const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates
 
     <div class="mt-12 prose prose-slate max-w-none">
         <h2 class="text-xl font-bold mb-3">
-            About {dataType.name} in {county} County
+            About {dataType.name} in {formalCounty} County
         </h2>
         <p>
-            View {seoDescription}. Whether you are commuting through {county} County
+            View {seoDescription}. Whether you are commuting through {formalCounty} County
             or traveling long-distance, these {typeKeywords} provide vital information
             for a safe trip.
         </p>

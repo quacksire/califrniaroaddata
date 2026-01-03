@@ -1,6 +1,16 @@
 // DataCard.tsx
 import React, { useState, useEffect, useRef, useId } from 'react';
-import type { AnyDataItem, CCTVItem, ChainControlItem, CMSItem, LCSItem, RWISItem, TTItem, DataTypeId } from '../utils/caltrans';
+import type {
+    AnyDataItem,
+    CCTVItem,
+    ChainControlItem,
+    CMSItem,
+    LCSItem,
+    RWISItem,
+    TTItem,
+    DataTypeId,
+    CmsLocation
+} from '../utils/caltrans';
 import LocationHeader from './LocationHeader';
 import HLSVideoPlayer from './HLSVideoPlayer';
 
@@ -8,13 +18,61 @@ interface Props {
     type: DataTypeId;
     data: AnyDataItem;
     slug?: string;
+    id?: string;
+    districtId?: string | number;
 }
 
-import { generateItemId, generateItemSlug } from '../utils/caltrans';
+import { generateItemId, generateItemSlug, fetchItemById } from '../utils/caltrans';
 
-export default function DataCard({ type, data, slug }: Props) {
+export default function DataCard({ type, data: initialData, slug, id, districtId }: Props) {
+    const [data, setData] = useState<AnyDataItem>(initialData);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
     // unique ids for accessibility
     const reactId = useId();
+
+    useEffect(() => {
+        const refreshData = async () => {
+            if (!id || !districtId) return;
+
+            // Check if data is more than 1 hour old
+            let dateStr = '';
+            let timeStr = '';
+
+            const anyData = data as any;
+            const itemKey = type;
+            if (anyData[itemKey]?.recordTimestamp) {
+                dateStr = anyData[itemKey].recordTimestamp.recordDate;
+                timeStr = anyData[itemKey].recordTimestamp.recordTime;
+            } else if (anyData[itemKey]?.closure?.closureTimestamp) {
+                // LCS specific
+                dateStr = anyData[itemKey].closure.closureTimestamp.closureStartDate;
+                timeStr = anyData[itemKey].closure.closureTimestamp.closureStartTime;
+            }
+
+            let isOld = true;
+            if (dateStr && timeStr) {
+                const timestamp = new Date(`${dateStr}T${timeStr}`).getTime();
+                const now = Date.now();
+                isOld = (now - timestamp) > (60 * 60 * 1000);
+            }
+
+            if (isOld) {
+                setIsRefreshing(true);
+                const freshData = await fetchItemById(type, districtId, id);
+                if (freshData) {
+                    setData(freshData);
+                    setLastRefreshed(new Date());
+                }
+                setIsRefreshing(false);
+            }
+        };
+
+        if (slug && id && districtId) {
+            refreshData();
+        }
+    }, [id, districtId, slug, type]);
     const titleId = `loc-title-${reactId}`;
     const descId = `loc-desc-${reactId}`;
 
@@ -32,17 +90,17 @@ export default function DataCard({ type, data, slug }: Props) {
 
         switch (type) {
             case 'cctv':
-                return <CCTVCard data={data as CCTVItem} titleId={titleId} descId={descId} type={type} />;
+                return <CCTVCard data={data as CCTVItem} titleId={titleId} descId={descId} type={type} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed} />;
             case 'cc':
-                return <ChainControlCard data={data as ChainControlItem} titleId={titleId} descId={descId} type={type} />;
+                return <ChainControlCard data={data as ChainControlItem} titleId={titleId} descId={descId} type={type} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed} />;
             case 'cms':
-                return <CMSCard data={data as CMSItem} titleId={titleId} descId={descId} type={type} />;
+                return <CMSCard data={data as CMSItem} titleId={titleId} descId={descId} type={type} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed} />;
             case 'lcs':
-                return <LCSCard data={data as LCSItem} titleId={titleId} descId={descId} type={type} />;
+                return <LCSCard data={data as LCSItem} titleId={titleId} descId={descId} type={type} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed} />;
             case 'rwis':
-                return <RWISCard data={data as RWISItem} titleId={titleId} descId={descId} type={type} />;
+                return <RWISCard data={data as RWISItem} titleId={titleId} descId={descId} type={type} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed} />;
             case 'tt':
-                return <TTCard data={data as TTItem} titleId={titleId} descId={descId} type={type} />;
+                return <TTCard data={data as TTItem} titleId={titleId} descId={descId} type={type} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed} />;
             default:
                 return null;
         }
@@ -60,18 +118,18 @@ export default function DataCard({ type, data, slug }: Props) {
     // Otherwise, generate link
     // We need district ID. It's usually in location.district (number) or similar.
     // Let's safe extract it.
-    let districtId: number | undefined;
+    let extractedDistrictId: number | undefined;
     const anyData = data as any;
-    if (anyData.cctv) districtId = anyData.cctv.location.district;
-    else if (anyData.cms) districtId = anyData.cms.location.district;
-    else if (anyData.cc) districtId = anyData.cc.location.district;
-    else if (anyData.rwis) districtId = anyData.rwis.location.district;
-    else if (anyData.lcs) districtId = anyData.lcs.location.begin?.beginDistrict; // specific for LCS
-    else if (anyData.tt) districtId = anyData.tt.location.begin?.beginDistrict; // specific for TT
+    if (anyData.cctv) extractedDistrictId = anyData.cctv.location.district;
+    else if (anyData.cms) extractedDistrictId = anyData.cms.location.district;
+    else if (anyData.cc) extractedDistrictId = anyData.cc.location.district;
+    else if (anyData.rwis) extractedDistrictId = anyData.rwis.location.district;
+    else if (anyData.lcs) extractedDistrictId = anyData.lcs.location.begin?.beginDistrict; // specific for LCS
+    else if (anyData.tt) extractedDistrictId = anyData.tt.location.begin?.beginDistrict; // specific for TT
 
-    if (districtId) {
+    if (extractedDistrictId) {
         const itemSlug = generateItemSlug(type, data);
-        const itemId = generateItemId(type, districtId, data);
+        const itemId = generateItemId(type, extractedDistrictId, data);
 
         if (itemSlug && itemId) {
             return (
@@ -89,11 +147,11 @@ export default function DataCard({ type, data, slug }: Props) {
     );
 }
 
-function CardWrapper({ children, location, titleId, descId, dataType, dataLd }: { children: React.ReactNode; location: any; titleId?: string; descId?: string; dataType?: string; dataLd?: any }) {
+function CardWrapper({ children, location, titleId, descId, dataType, dataLd, isRefreshing, lastRefreshed }: { children: React.ReactNode; location: any; titleId?: string; descId?: string; dataType?: string; dataLd?: any; isRefreshing?: boolean; lastRefreshed?: Date | null }) {
     return (
         <article data-type={dataType} className="bg-white border-2 border-black rounded-lg overflow-hidden hover:shadow-lg transition-all h-full flex flex-col" role="region" aria-labelledby={titleId} aria-describedby={descId} tabIndex={0}>
-            <LocationHeader location={location} titleId={titleId} descId={descId} />
-            <div className="p-4 grow flex flex-col justify-center">
+            <LocationHeader location={location} titleId={titleId} descId={descId} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed} />
+            <div className="p-4 grow flex flex-col justify-center relative">
                 {children}
             </div>
             {dataLd && (
@@ -103,13 +161,13 @@ function CardWrapper({ children, location, titleId, descId, dataType, dataLd }: 
     );
 }
 
-function CCTVCard({ data, titleId, descId, type }: { data: CCTVItem; titleId?: string; descId?: string; type?: DataTypeId }) {
+function CCTVCard({ data, titleId, descId, type, isRefreshing, lastRefreshed }: { data: CCTVItem; titleId?: string; descId?: string; type?: DataTypeId; isRefreshing?: boolean; lastRefreshed?: Date | null }) {
     const { location, imageData } = data.cctv;
 
     // Handle missing imageData
     if (!imageData || !imageData.static) {
         return (
-            <CardWrapper location={location} titleId={titleId} descId={descId}>
+            <CardWrapper location={location} titleId={titleId} descId={descId} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
                 <div className="relative aspect-video bg-white border-2 border-black rounded-lg overflow-hidden flex items-center justify-center">
                     <span className="text-black">No image data available</span>
                 </div>
@@ -169,7 +227,7 @@ function CCTVCard({ data, titleId, descId, type }: { data: CCTVItem; titleId?: s
     };
 
     return (
-        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld}>
+        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
             <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-inner">
                 {!hasLive ? (
                     <div
@@ -208,13 +266,13 @@ function CCTVCard({ data, titleId, descId, type }: { data: CCTVItem; titleId?: s
     );
 }
 
-function CMSCard({ data, titleId, descId, type }: { data: CMSItem; titleId?: string; descId?: string; type?: DataTypeId }) {
+function CMSCard({ data, titleId, descId, type, isRefreshing, lastRefreshed }: { data: CMSItem; titleId?: string; descId?: string; type?: DataTypeId; isRefreshing?: boolean; lastRefreshed?: Date | null }) {
     const { location, message, recordTimestamp } = data.cms;
 
     // Handle missing message data
     if (!message || !message.phase1) {
         return (
-            <CardWrapper location={location} titleId={titleId} descId={descId}>
+            <CardWrapper location={location} titleId={titleId} descId={descId} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
                 <div className="bg-white border-2 border-black rounded-lg p-6 text-center text-black font-mono text-sm min-h-30 flex flex-col justify-center items-center">
                     <div className="mb-2">N/A</div>
                     <div>No message data</div>
@@ -250,7 +308,7 @@ function CMSCard({ data, titleId, descId, type }: { data: CMSItem; titleId?: str
     };
 
     return (
-        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld}>
+        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
             {isBlank ? (
                 <div className="bg-white border-2 border-black rounded-lg p-6 text-center text-black text-sm min-h-30 flex flex-col justify-center items-center">
                     <div className="mb-2">OFF</div>
@@ -275,7 +333,7 @@ function CMSCard({ data, titleId, descId, type }: { data: CMSItem; titleId?: str
     );
 }
 
-function ChainControlCard({ data, titleId, descId, type }: { data: ChainControlItem; titleId?: string; descId?: string; type?: DataTypeId }) {
+function ChainControlCard({ data, titleId, descId, type, isRefreshing, lastRefreshed }: { data: ChainControlItem; titleId?: string; descId?: string; type?: DataTypeId; isRefreshing?: boolean; lastRefreshed?: Date | null }) {
     const { location, statusData } = data.cc;
 
     const ld = {
@@ -288,7 +346,7 @@ function ChainControlCard({ data, titleId, descId, type }: { data: ChainControlI
     };
 
     return (
-        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld}>
+        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-black">Status</span>
@@ -305,13 +363,13 @@ function ChainControlCard({ data, titleId, descId, type }: { data: ChainControlI
     );
 }
 
-function LCSCard({ data, titleId, descId, type }: { data: LCSItem; titleId?: string; descId?: string; type?: DataTypeId }) {
+function LCSCard({ data, titleId, descId, type, isRefreshing, lastRefreshed }: { data: LCSItem; titleId?: string; descId?: string; type?: DataTypeId; isRefreshing?: boolean; lastRefreshed?: Date | null }) {
     const { location, closure } = data.lcs;
 
     // Handle missing data
     if (!location || !location.begin || !closure) {
         return (
-            <CardWrapper location={location?.begin || { locationName: "Unknown" }} titleId={titleId} descId={descId} dataType={type}>
+            <CardWrapper location={location?.begin || { locationName: "Unknown" }} titleId={titleId} descId={descId} dataType={type} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
                 <div className="text-center text-black">No closure data available</div>
             </CardWrapper>
         );
@@ -363,8 +421,20 @@ function LCSCard({ data, titleId, descId, type }: { data: LCSItem; titleId?: str
         closureId: closureID || null,
     };
 
+    const convertedLocation = {
+        locationName: location.begin.beginLocationName,
+        nearbyPlace: location.begin.beginNearbyPlace,
+        direction: location.travelFlowDirection,
+        route: location.begin.beginRoute,
+        district: location.begin.beginDistrict,
+        latitude: location.begin.beginLatitude,
+        longitude: location.begin.beginLongitude,
+        routeSuffix: location.begin.beginRouteSuffix,
+        milepost: location.begin.beginMilepost,
+    };
+
     return (
-        <CardWrapper location={location.begin} titleId={titleId} descId={descId} dataType={type} dataLd={ld}>
+        <CardWrapper location={convertedLocation} titleId={titleId} descId={descId} dataType={type} dataLd={ld} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
             <div className="space-y-3" aria-label={`Closure: ${typeOfClosure} - ${typeOfWork}`}>
                 {/* Header: facility + type */}
                 <div className="flex items-baseline justify-between gap-3">
@@ -431,13 +501,13 @@ function LCSCard({ data, titleId, descId, type }: { data: LCSItem; titleId?: str
     );
 }
 
-function RWISCard({ data, titleId, descId, type }: { data: RWISItem; titleId?: string; descId?: string; type?: DataTypeId }) {
+function RWISCard({ data, titleId, descId, type, isRefreshing, lastRefreshed }: { data: RWISItem; titleId?: string; descId?: string; type?: DataTypeId; isRefreshing?: boolean; lastRefreshed?: Date | null }) {
     const { location, rwisData } = data.rwis;
 
     // Handle missing data
     if (!rwisData || !rwisData.temperatureData || !rwisData.windData || !rwisData.humidityPrecipData) {
         return (
-            <CardWrapper location={location} titleId={titleId} descId={descId}>
+            <CardWrapper location={location} titleId={titleId} descId={descId} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
                 <div className="text-center text-black">No weather data available</div>
             </CardWrapper>
         );
@@ -461,7 +531,7 @@ function RWISCard({ data, titleId, descId, type }: { data: RWISItem; titleId?: s
     };
 
     return (
-        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld}>
+        <CardWrapper location={location} titleId={titleId} descId={descId} dataType={type} dataLd={ld} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
             <dl className="grid grid-cols-2 gap-3 text-sm" aria-live="polite" aria-atomic="true">
                 <div className="bg-white p-2 rounded border-2 border-black">
                     <dt className="text-black text-xs uppercase tracking-wider mb-1">Air Temp</dt>
@@ -476,18 +546,32 @@ function RWISCard({ data, titleId, descId, type }: { data: RWISItem; titleId?: s
                     <dd className="font-medium text-black">{windSpeed !== "Not Reported" ? `${windSpeed} mph` : "N/A"} <span className="text-black">{windDir !== "Not Reported" ? `${windDir}°` : ""}</span></dd>
                 </div>
             </dl>
-            <span id={descId} className="sr-only">{`Air temp ${airTemp !== 'Not Reported' ? `${(parseFloat(airTemp)/10).toFixed(1)}°F` : 'N/A'}. Humidity ${rwisData.humidityPrecipData.essRelativeHumidity !== 'Not Reported' ? `${rwisData.humidityPrecipData.essRelativeHumidity}%` : 'N/A'}. Wind ${windSpeed !== 'Not Reported' ? `${windSpeed} mph` : 'N/A'} ${windDir !== 'Not Reported' ? `${windDir}°` : ''}.`}</span>
+            <span id={descId} className="sr-only">{`Air temp ${airTemp !== 'Not Reported' ? `${(parseFloat(airTemp) / 10).toFixed(1)}°F` : 'N/A'}. Humidity ${rwisData.humidityPrecipData.essRelativeHumidity !== 'Not Reported' ? `${rwisData.humidityPrecipData.essRelativeHumidity}%` : 'N/A'}. Wind ${windSpeed !== 'Not Reported' ? `${windSpeed} mph` : 'N/A'} ${windDir !== 'Not Reported' ? `${windDir}°` : ''}.`}</span>
         </CardWrapper>
     );
 }
 
-function TTCard({ data, titleId, descId, type }: { data: TTItem; titleId?: string; descId?: string; type?: DataTypeId }) {
+function TTCard({ data, titleId, descId, type, isRefreshing, lastRefreshed }: { data: TTItem; titleId?: string; descId?: string; type?: DataTypeId; isRefreshing?: boolean; lastRefreshed?: Date | null }) {
     const { location, traveltime } = data.tt;
+
+    const convertedBeginLocation = {
+        locationName: location.begin.beginLocationName,
+        nearbyPlace: location.begin.beginNearbyPlace,
+        direction: location.trafficFlowDirection,
+        route: location.begin.beginRoute,
+        district: location.begin.beginDistrict,
+        latitude: location.begin.beginLatitude,
+        longitude: location.begin.beginLongitude,
+        routeSuffix: location.begin.beginRouteSuffix,
+        milepost: location.begin.beginMilepost,
+    }
+
+
 
     // Handle missing data
     if (!location || !location.begin || !location.end || !traveltime) {
         return (
-            <CardWrapper location={location?.begin || { locationName: "Unknown" }} titleId={titleId} descId={descId}>
+            <CardWrapper location={location?.begin || { locationName: "Unknown" }} titleId={titleId} descId={descId} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
                 <div className="text-center text-black">No travel time data available</div>
             </CardWrapper>
         );
@@ -503,7 +587,7 @@ function TTCard({ data, titleId, descId, type }: { data: TTItem; titleId?: strin
     };
 
     return (
-        <CardWrapper location={location.begin} titleId={titleId} descId={descId} dataType={type} dataLd={ld}>
+        <CardWrapper location={convertedBeginLocation} titleId={titleId} descId={descId} dataType={type} dataLd={ld} isRefreshing={isRefreshing} lastRefreshed={lastRefreshed}>
             <div className="flex items-center justify-between mb-4">
                 <span className="text-4xl font-bold text-black" aria-hidden="true">{traveltime.calculatedTraveltime}</span>
                 <span className="text-sm text-black uppercase tracking-wider">Minutes</span>

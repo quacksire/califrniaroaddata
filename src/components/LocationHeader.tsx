@@ -14,14 +14,16 @@ interface Props {
     }
     titleId?: string;
     descId?: string;
+    isRefreshing?: boolean;
+    lastRefreshed?: Date | null;
 }
 
-export default function LocationHeader({ location, titleId, descId }: Props) {
+export default function LocationHeader({ location, titleId, descId, isRefreshing, lastRefreshed }: Props) {
     if (!location) return null;
 
     // Handle different location name fields
     const locationName = location.locationName || location.beginLocationName || '';
-    const nearbyPlace = location.nearbyPlace || location.beginNearbyPlace || '';
+    const nearbyPlace = location.nearbyPlace &&  location.nearbyPlace !== 'Not Reported' ?  location.nearbyPlace : null;
     const direction = location.direction || location.beginDirection || '';
 
     // Get route from location name
@@ -54,7 +56,13 @@ export default function LocationHeader({ location, titleId, descId }: Props) {
             )}
             <div className="grow min-w-0">
                 <h3 id={titleId} className="font-semibold text-black truncate" title={nearbyPlace || locationName}>
-                    {nearbyPlace || locationName}
+                    {(() => {
+                        const v = nearbyPlace || locationName || '';
+                        if (v && v === v.toUpperCase()) {
+                            return v.toLowerCase().split(/\s+/).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+                        }
+                        return v;
+                    })()}
                 </h3>
                 {parsedDirection && (
                     <p className="text-xs text-black">
@@ -63,6 +71,27 @@ export default function LocationHeader({ location, titleId, descId }: Props) {
                 )}
                 {descId && (
                     <span id={descId} className="sr-only">{accessibleDescription}</span>
+                )}
+            </div>
+
+            {/* Refresh Indicator on the far right */}
+            <div className="shrink-0 flex items-center h-full">
+                {isRefreshing && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-yellow-100 border border-yellow-400 rounded text-[10px] font-bold text-yellow-800 animate-pulse">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                        </span>
+                    </div>
+                )}
+                {lastRefreshed && !isRefreshing && (
+                    <div
+                        className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 border border-green-200 rounded text-[10px] font-bold text-green-700 cursor-help transition-colors hover:bg-green-100"
+                        title={`Refreshed at ${lastRefreshed.toLocaleTimeString()}`}
+                    >
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                        LIVE
+                    </div>
                 )}
             </div>
         </div>

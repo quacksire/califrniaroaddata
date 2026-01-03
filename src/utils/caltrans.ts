@@ -1483,6 +1483,28 @@ export function generateItemId(type: DataTypeId, districtId: string | number, it
     return `${type}-d${d}-i${safeIndex}`;
 }
 
+/**
+ * Fetch a single item by its ID from the live API.
+ */
+export async function fetchItemById(type: DataTypeId, districtId: string | number, id: string): Promise<AnyDataItem | null> {
+    try {
+        const url = getApiUrl(type, String(districtId));
+        const res = await fetch(url);
+        if (res.ok) {
+            const json = await res.json();
+            if (json && Array.isArray(json.data)) {
+                return json.data.find((item: any) => {
+                    const generatedId = generateItemId(type, districtId, item);
+                    return generatedId === id;
+                }) || null;
+            }
+        }
+    } catch (e) {
+        console.error(`Failed to fetch item ${id} from live API`, e);
+    }
+    return null;
+}
+
 export function generateItemSlug(type: DataTypeId, item: AnyDataItem): string {
     const typeName = DATA_TYPES[type].name;
     const locationName = getLocationName(item);

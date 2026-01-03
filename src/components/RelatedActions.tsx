@@ -1,6 +1,8 @@
 import React from 'react';
-import { Bell, Map, Home, ArrowRight, MapPin } from 'lucide-react';
+import { Bell, Map as MapIcon, Home, ArrowRight, MapPin } from 'lucide-react';
 import Shield from './Shield';
+import { Card } from "@/components/ui/card.tsx";
+import { Map, MapControls } from "@/components/ui/map.tsx";
 
 interface Props {
     type: string;
@@ -8,13 +10,37 @@ interface Props {
         district: { id: string; name: string; url: string };
         county?: { name: string; url: string };
         highway?: { name: string; url: string };
-    }
+    };
+    longitude?: number;
+    latitude?: number;
 }
 
-export default function RelatedActions({ type, items }: Props) {
+import { MapMarker, MarkerContent } from "@/components/ui/map.tsx";
+
+export default function RelatedActions({ type, items, longitude, latitude }: Props) {
+    const center = longitude && latitude ? [longitude, latitude] as [number, number] : [-119.4179, 36.7783] as [number, number];
+    const zoom = longitude && latitude ? 9 : 5;
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-            {/* Notify Card */}
+            <Card className="h-full min-h-[300px] p-0 overflow-hidden relative border-2 border-black rounded-xl">
+                <Map center={center} zoom={zoom}>
+                    <MapControls />
+                    {longitude && latitude && (
+                        <MapMarker longitude={longitude} latitude={latitude}>
+                            <MarkerContent>
+                                <div className="flex flex-col items-center">
+                                    <div className="bg-black text-white p-1 rounded-full border-2 border-white shadow-xl">
+                                        <MapPin className="w-5 h-5" />
+                                    </div>
+                                </div>
+                            </MarkerContent>
+                        </MapMarker>
+                    )}
+                </Map>
+            </Card>
+
+            {/* Notify Card - Commented out as requested
             <div className="bg-white border-2 border-black rounded-xl overflow-hidden hover:shadow-lg transition-all">
                 <div className="p-6 space-y-2">
                     <div className="flex items-center gap-2 font-bold text-black leading-none tracking-tight text-lg">
@@ -31,6 +57,7 @@ export default function RelatedActions({ type, items }: Props) {
                     </button>
                 </div>
             </div>
+            */}
 
             {/* Local Data Card */}
             <div className="bg-white border-2 border-black rounded-xl overflow-hidden hover:shadow-lg transition-all">

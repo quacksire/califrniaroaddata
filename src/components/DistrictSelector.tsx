@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Shield from './Shield';
+import { slugify } from '../utils/caltrans';
 
 interface District {
     id: string;
@@ -86,7 +87,7 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                         {counties.map((county) => (
                             <a
                                 key={county}
-                                href={`/${type}/county/${encodeURIComponent(county)}`}
+                                href={`/${type}/county/${slugify(county)}`}
                                 className="p-4 bg-white border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all text-center font-bold "
                             >
                                 {county}

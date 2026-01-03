@@ -53,7 +53,7 @@ const typeKeywords = isCamera
 
 const title = `Live ${dataType.name} - ${districtInfo.name} | California Road Data`;
 
-const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates for ${districtInfo.name} (District ${district}), ${countyListPhrase}`;
+const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates for ${districtInfo.name} (District ${district})`;
 ---
 
 <Layout title={title}>
@@ -98,15 +98,21 @@ const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates
         initialData={initialData}
     />
 
-    <div class="mt-12 prose prose-slate max-w-none">
+    <div class="mt-12 prose max-w-none">
         <h2 class="text-xl font-bold mb-3">
             About {dataType.name} in {districtInfo.name}
         </h2>
         <p>
             View {seoDescription}. District {district} manages traffic safety across
             a broad area, including major routes in <strong
-                >{uniqueCounties.join(", ")}</strong
-            >.
+                >{uniqueCounties.length === 0
+                    ? ""
+                    : uniqueCounties.length === 1
+                    ? uniqueCounties[0]
+                    : uniqueCounties.length === 2
+                    ? `${uniqueCounties[0]} and ${uniqueCounties[1]}`
+                    : `${uniqueCounties.slice(0, -1).join(", ")}, and ${uniqueCounties[uniqueCounties.length - 1]}`
+                }</strong> {uniqueCounties.length > 0 ? "counties" : "county"}.
         </p>
         <p>
             Monitor {typeKeywords} to distinguish local traffic conditions from regional

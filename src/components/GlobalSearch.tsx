@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { DISTRICT_NAMES, DISTRICT_IDS, COUNTIES, ROUTES, COUNTY_DISTRICT_MAP } from '../data/locations';
 import { Search } from 'lucide-react';
+import { slugify } from '../utils/caltrans';
 
 export default function GlobalSearch() {
     const [query, setQuery] = useState('');
@@ -26,15 +27,11 @@ export default function GlobalSearch() {
         // Match Counties
         COUNTIES.forEach(c => {
             if (c.toLowerCase().includes(q)) {
-                const distId = COUNTY_DISTRICT_MAP[c];
-                if (distId) {
-                    const distStr = distId.toString().padStart(2, '0');
-                    matches.push({
-                        type: 'County',
-                        label: c,
-                        url: `/cctv/${distStr}?search=${c}` // Pre-fill search filter
-                    });
-                }
+                matches.push({
+                    type: 'County',
+                    label: c,
+                    url: `/cctv/county/${slugify(c)}`
+                });
             }
         });
 

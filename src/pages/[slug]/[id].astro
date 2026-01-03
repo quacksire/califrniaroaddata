@@ -116,6 +116,12 @@ const getRouteUrl = (h: string) => `/${type}/route/${slugify(h)}`;
 const getCountyUrl = (c: string) => `/${type}/county/${slugify(c)}`;
 const getDistrictUrl = (d: string) => `/${type}/${d}`;
 
+const itemData = (item as any)[type];
+const longitude =
+    itemData?.location?.longitude || itemData?.location?.begin?.beginLongitude;
+const latitude =
+    itemData?.location?.latitude || itemData?.location?.begin?.beginLatitude;
+
 const relatedItems = {
     district: {
         id: districtId,
@@ -141,11 +147,6 @@ const relatedItems = {
     <main class="container mx-auto px-4 py-8">
         <div class="max-w-4xl mx-auto">
             <div class="mb-6">
-                <a
-                    href="/"
-                    class="text-blue-600 hover:underline mb-2 inline-block"
-                    >&larr; Back to Home</a
-                >
                 <h1 class="text-3xl font-bold mb-2 text-black">
                     {locationName || "Unknown Location"}
                 </h1>
@@ -167,11 +168,19 @@ const relatedItems = {
                     type={type}
                     data={item}
                     slug={Astro.params.slug}
+                    id={Astro.params.id}
+                    districtId={districtId}
                 />
             </div>
 
             {/* Related Actions / CTAs */}
-            <RelatedActions client:idle type={typeName} items={relatedItems} />
+            <RelatedActions
+                client:idle
+                type={typeName}
+                items={relatedItems}
+                longitude={longitude}
+                latitude={latitude}
+            />
 
             <div class="mt-8 prose prose-slate max-w-none">
                 <h2 class="text-xl font-bold mb-3">
