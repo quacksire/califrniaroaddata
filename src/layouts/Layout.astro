@@ -54,6 +54,84 @@ const { title } = Astro.props;
 			<slot />
 		</main>
 
+		<script>
+			const modelContext = (navigator as any).modelContext;
+			const documentModelContext = (document as any).modelContext;
+
+			const dataTypes = ["cctv", "cms", "cc", "lcs", "rwis", "tt"];
+			const districtSchema = {
+				type: "string",
+				pattern: "^(0[1-9]|1[0-2])$",
+				description: "Two-digit Caltrans district identifier.",
+			};
+
+			const tools = [
+				{
+					name: "get_caltrans_data",
+					description:
+						"Use the California Road Data API layer to read current public Caltrans road data for a source and district.",
+					inputSchema: {
+						type: "object",
+						properties: {
+							type: { type: "string", enum: dataTypes },
+							district: districtSchema,
+							limit: {
+								type: "integer",
+								minimum: 1,
+								maximum: 200,
+								default: 50,
+							},
+						},
+						required: ["type", "district"],
+						additionalProperties: false,
+					},
+					annotations: { readOnlyHint: true, untrustedContentHint: true },
+					execute: async ({ type, district, limit = 50 }: any) => {
+						const response = await fetch(
+							`/api/caltrans/${encodeURIComponent(type)}/${encodeURIComponent(district)}`,
+						);
+						if (!response.ok) {
+							throw new Error(`Road data request failed (${response.status}).`);
+						}
+
+						const payload = await response.json();
+						const records = Array.isArray(payload.data)
+							? payload.data.slice(0, Math.min(200, Math.max(1, Number(limit) || 50)))
+							: payload;
+						return { type, district, records };
+					},
+				},
+				{
+					name: "open_caltrans_explorer",
+					description:
+						"Open the California Road Data explorer for a source and district.",
+					inputSchema: {
+						type: "object",
+						properties: {
+							type: { type: "string", enum: dataTypes },
+							district: districtSchema,
+						},
+						required: ["type", "district"],
+						additionalProperties: false,
+					},
+					annotations: { readOnlyHint: true },
+					execute: ({ type, district }: any) => {
+						const target = `/${encodeURIComponent(type)}/${encodeURIComponent(district)}`;
+						window.location.assign(target);
+						return { navigatedTo: target };
+					},
+				},
+			];
+
+			if (typeof modelContext?.provideContext === "function") {
+				modelContext.provideContext({ tools });
+			} else if (typeof documentModelContext?.registerTool === "function") {
+				for (const tool of tools) {
+					documentModelContext.registerTool(tool);
+				}
+			}
+		</script>
+
 		<footer class="border-t-2 border-black bg-white py-8 mt-auto">
 			<div
 				class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-black text-sm"

@@ -8,8 +8,18 @@ import {
 	CardContent,
 } from "../components/ui/card";
 
-export const prerender = true;
+export const prerender = false;
 Astro.response.headers.set("Cache-Control", "public, max-age=86400");
+Astro.response.headers.set(
+	"Link",
+	[
+		'</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
+		'</openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json;version=3.1"',
+		'</docs/api>; rel="service-doc"; type="text/html"',
+		'</.well-known/mcp/server-card.json>; rel="alternate"; type="application/mcp-server-card+json"',
+		'</.well-known/agent-skills/index.json>; rel="alternate"; type="application/json"; title="Agent Skills Index"',
+	].join(", "),
+);
 
 const cardData = [
 	{

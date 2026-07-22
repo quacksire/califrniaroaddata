@@ -1,0 +1,46 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="California Road Data API">
+	<article class="prose max-w-3xl mx-auto prose-slate">
+		<h1>California Road Data API</h1>
+		<p>
+			California Road Data is the public, read-only API layer for current
+			Caltrans road-condition data. It does not require an API key, account,
+			or OAuth token.
+		</p>
+
+		<h2>Quick start</h2>
+		<pre><code>GET /api/caltrans/{"{type}"}/{"{district}"}</code></pre>
+		<p>
+			For example, this returns the current Caltrans traffic-camera feed for
+			District 4:
+		</p>
+		<pre><code>https://californiaroaddata.com/api/caltrans/cctv/04</code></pre>
+
+		<h2>Parameters</h2>
+		<ul>
+			<li><code>type</code>: one of <code>cctv</code>, <code>cms</code>, <code>cc</code>, <code>lcs</code>, <code>rwis</code>, or <code>tt</code>.</li>
+			<li><code>district</code>: a two-digit Caltrans district identifier, such as <code>04</code>.</li>
+		</ul>
+		<p>
+			Not every source is available in every district. Use
+			<a href="/api/metadata"> API metadata</a> to see the supported combinations.
+		</p>
+
+		<h2>Machine-readable resources</h2>
+		<ul>
+			<li><a href="/openapi.json">OpenAPI 3.1 description</a></li>
+			<li><a href="/.well-known/api-catalog">RFC 9727 API catalog</a></li>
+			<li><a href="/api/health">Service status</a></li>
+		</ul>
+
+		<h2>Data source and caching</h2>
+		<p>
+			Responses are derived from public Caltrans district feeds and may be cached
+			briefly. Treat live conditions as time-sensitive and follow official traffic
+			controls while traveling.
+		</p>
+	</article>
+</Layout>
