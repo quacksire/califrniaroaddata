@@ -81,7 +81,7 @@ const routeListPhrase =
 
 const isCamera = type === "cctv";
 const typeKeywords = isCamera
-    ? "live traffic cameras, Caltrans CCTV, freeway webcams"
+    ? "live traffic cameras, freeway webcams"
     : `${dataType.name}, road conditions, highway status`;
 
 const title = `Live ${dataType.name} in ${formalCounty} County | California Road Data`;
@@ -141,8 +141,8 @@ const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates
             for a safe trip.
         </p>
         <p>
-            Data is sourced directly from Caltrans and includes coverage of
-            major routes and local highways within the county,
+			California Road Data provides a digestible view of major routes and
+			local highways within the county,
             {
                 uniqueRoutes.length > 0
                     ? `specifically monitoring ${uniqueRoutes.join(", ")}.`

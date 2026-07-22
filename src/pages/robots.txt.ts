@@ -5,7 +5,7 @@ export async function GET({ request }: { request: Request }) {
   try {
     const sitemap = `${site}/sitemap-index.xml`;
 
-    const body = `User-agent: *\nAllow: /\nSitemap: ${sitemap}\n`;
+    const body = `User-agent: *\nAllow: /\nSitemap: ${sitemap}\nContent-Signal: ai-train=no, search=yes, ai-input=yes\n`;
 
     return new Response(body, {
       headers: {
@@ -15,10 +15,9 @@ export async function GET({ request }: { request: Request }) {
     });
   } catch (e) {
     // Fallback: return a robots file that allows all and references a relative sitemap
-    const fallback = `User-agent: *\nAllow: /\nSitemap: /sitemap-index.xml\n`;
+    const fallback = `User-agent: *\nAllow: /\nSitemap: /sitemap-index.xml\nContent-Signal: ai-train=no, search=yes, ai-input=yes\n`;
     return new Response(fallback, {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }
 }
-

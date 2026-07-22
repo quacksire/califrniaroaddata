@@ -100,7 +100,7 @@ const relatedItems = {
         : undefined,
 };
 
-const seoDescription = `Current ${dataType.name.toLowerCase()} status at ${name}${highwayName ? `, located on ${highwayName}` : ""}${countyName ? ` in ${countyName} County` : ""}. Real-time data from Caltrans District ${district}.`;
+const seoDescription = `Current ${dataType.name.toLowerCase()} status at ${name}${highwayName ? `, located on ${highwayName}` : ""}${countyName ? ` in ${countyName} County` : ""}. Real-time information for District ${district}.`;
 ---
 
 <Layout title={title}>
@@ -140,10 +140,9 @@ const seoDescription = `Current ${dataType.name.toLowerCase()} status at ${name}
                 You are viewing {seoDescription}
             </p>
             <p>
-                <strong>{name}</strong> is a specific data collection point maintained
-                by Caltrans District {district} ({districtInfo?.name}). This
-                page provides a focused view of the live feed, ensuring you have
-                the latest information for this exact location.
+				<strong>{name}</strong> is a specific road-data location in District
+				{district} ({districtInfo?.name}). This page provides a focused,
+				digestible view with the latest information for this exact location.
             </p>
             <p>
                 To see more updates nearby, use the buttons above to view all {

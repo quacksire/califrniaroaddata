@@ -54,7 +54,7 @@ export default function DistrictSelector({ type, districts, counties, routes }: 
                         }`}
                 >
                     <h3 className="text-xl font-bold mb-2 ">Choose By District</h3>
-                    <p className="text-sm opacity-80 ">Grab cameras from a Caltrans district</p>
+					<p className="text-sm opacity-80 ">Browse cameras by district</p>
                 </button>
             </div>
 

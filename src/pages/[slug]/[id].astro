@@ -97,14 +97,14 @@ const countyName = counties.length > 0 ? counties[0] : null;
 // Dynamic Keywords based on type
 const isCamera = type === "cctv";
 const typeKeywords = isCamera
-    ? "Caltrans CCTV, live traffic camera, highway surveillance, freeway webcam"
-    : `${typeName}, road conditions, Caltrans data, highway status`;
+    ? "live traffic camera, highway surveillance, freeway webcam"
+    : `${typeName}, road conditions, highway status`;
 
 const seoSentences = [
-    `View live ${isCamera ? "Caltrans traffic camera" : typeName.toLowerCase()} updates for ${locationName}.`,
+    `View live ${isCamera ? "traffic camera" : typeName.toLowerCase()} updates for ${locationName}.`,
     countyName ? `Located in ${countyName} County, California.` : "",
     highway ? `Monitoring real-time traffic conditions on ${highway}.` : "",
-    `Part of the Caltrans ${districtName} network.`,
+    `Part of the ${districtName} road network.`,
     `Check this page for ${isCamera ? "live CCTV images" : "current status"}, road closures, and ${typeKeywords}.`,
 ]
     .filter(Boolean)
@@ -186,7 +186,7 @@ const relatedItems = {
                 <h2 class="text-xl font-bold mb-3">
                     {
                         isCamera
-                            ? `Live Caltrans Camera at ${locationName}`
+                            ? `Live Camera at ${locationName}`
                             : `${typeName} on ${highway || locationName}`
                     }
                 </h2>
@@ -237,19 +237,17 @@ const relatedItems = {
                         isCamera
                             ? "visual confirmation of road conditions"
                             : "status updates"
-                    } directly from Caltrans devices.
+					} through the California Road Data Explorer.
                 </p>
 
                 <h3 class="text-lg font-semibold mt-6 mb-2">
                     California Traffic Resources
                 </h3>
                 <p>
-                    In addition to this {typeName.toLowerCase()} feed, motorists
-                    can monitor highway conditions using the Caltrans QuickMap, check
-                    for chain controls in mountain regions like Tahoe and Mammoth,
-                    and stay alert for hazardous road conditions reported by the
-                    CHP. Always rely on official sources for the most critical safety
-                    alerts.
+                    In addition to this {typeName.toLowerCase()} view, motorists
+                    should check posted signs, weather forecasts, and local emergency
+                    guidance before traveling. Always follow official traffic controls
+                    for the most critical safety alerts.
                 </p>
 
                 <p class="mt-4 text-sm text-gray-600">
