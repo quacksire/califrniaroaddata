@@ -48,7 +48,7 @@ const countyListPhrase =
 
 const isCamera = type === "cctv";
 const typeKeywords = isCamera
-    ? "live regional cameras, Caltrans district video, traffic monitoring"
+    ? "live regional cameras, district video, traffic monitoring"
     : `${dataType.name}, regional road status`;
 
 const title = `Live ${dataType.name} - ${districtInfo.name} | California Road Data`;
@@ -115,8 +115,9 @@ const seoDescription = `current real-time ${dataType.name.toLowerCase()} updates
                 }</strong> {uniqueCounties.length > 0 ? "counties" : "county"}.
         </p>
         <p>
-            Monitor {typeKeywords} to distinguish local traffic conditions from regional
-            alerts. This data is sourced directly from district-level feeds.
+			Monitor {typeKeywords} to distinguish local traffic conditions from
+			regional alerts. California Road Data presents these conditions in a
+			digestible Explorer view.
         </p>
     </div>
 </Layout>

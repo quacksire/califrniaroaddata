@@ -1,11 +1,10 @@
 import type { APIRoute } from "astro";
 import {
-	CaltransUpstreamError,
-	fetchCaltransData,
+	getExplorerResource,
 	isDataType,
 	normalizeDistrict,
 	supportsDistrict,
-} from "../../../../lib/caltrans-api";
+} from "../../../../lib/road-data-api";
 
 export const prerender = false;
 
@@ -29,7 +28,7 @@ function json(body: unknown, status = 200, headers: HeadersInit = {}) {
 export const OPTIONS: APIRoute = () =>
 	new Response(null, { status: 204, headers: corsHeaders });
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = ({ params, url }) => {
 	const { type } = params;
 	const district = normalizeDistrict(params.district);
 
@@ -37,25 +36,15 @@ export const GET: APIRoute = async ({ params }) => {
 		return json(
 			{
 				error:
-					"Use a supported data type and two-digit Caltrans district number.",
+					"Use a supported data type and two-digit California Road Data district number.",
 			},
 			400,
 		);
 	}
 
-	try {
-		const { data, source, lastModified } = await fetchCaltransData(type, district);
-
-		return json(data, 200, {
-			"Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=300",
-			"Link": `<${source}>; rel="source"; type="application/json"`,
-			...(lastModified ? { "Last-Modified": lastModified } : {}),
-		});
-	} catch (error) {
-		if (error instanceof CaltransUpstreamError) {
-			return json({ error: error.message }, error.status);
-		}
-
-		return json({ error: "Unable to retrieve Caltrans data." }, 502);
-	}
+	const resource = getExplorerResource(url.origin, type, district);
+	return json({ resource }, 200, {
+		"Cache-Control": "public, max-age=300",
+		"Link": `<${resource.url}>; rel="alternate"; type="text/html"`,
+	});
 };

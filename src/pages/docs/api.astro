@@ -6,26 +6,26 @@ import Layout from "../../layouts/Layout.astro";
 	<article class="prose max-w-3xl mx-auto prose-slate">
 		<h1>California Road Data API</h1>
 		<p>
-			California Road Data is the public, read-only API layer for current
-			Caltrans road-condition data. It does not require an API key, account,
-			or OAuth token.
+			This public, read-only navigation API returns canonical California Road
+			Data Explorer resources. It does not require an API key, account, or
+			OAuth token.
 		</p>
 
 		<h2>Quick start</h2>
-		<pre><code>GET /api/caltrans/{"{type}"}/{"{district}"}</code></pre>
+		<pre><code>GET /api/explorer/{"{type}"}/{"{district}"}</code></pre>
 		<p>
-			For example, this returns the current Caltrans traffic-camera feed for
-			District 4:
+			For example, this returns the canonical digestible Explorer resource for
+			traffic cameras in District 4:
 		</p>
-		<pre><code>https://californiaroaddata.com/api/caltrans/cctv/04</code></pre>
+		<pre><code>https://californiaroaddata.com/api/explorer/cctv/04</code></pre>
 
 		<h2>Parameters</h2>
 		<ul>
 			<li><code>type</code>: one of <code>cctv</code>, <code>cms</code>, <code>cc</code>, <code>lcs</code>, <code>rwis</code>, or <code>tt</code>.</li>
-			<li><code>district</code>: a two-digit Caltrans district identifier, such as <code>04</code>.</li>
+			<li><code>district</code>: a two-digit district identifier, such as <code>04</code>.</li>
 		</ul>
 		<p>
-			Not every source is available in every district. Use
+			Not every category is available in every district. Use
 			<a href="/api/metadata"> API metadata</a> to see the supported combinations.
 		</p>
 
@@ -36,11 +36,10 @@ import Layout from "../../layouts/Layout.astro";
 			<li><a href="/api/health">Service status</a></li>
 		</ul>
 
-		<h2>Data source and caching</h2>
+		<h2>Freshness</h2>
 		<p>
-			Responses are derived from public Caltrans district feeds and may be cached
-			briefly. Treat live conditions as time-sensitive and follow official traffic
-			controls while traveling.
+			Road conditions can change quickly. Treat Explorer content as
+			time-sensitive and follow posted traffic controls while traveling.
 		</p>
 	</article>
 </Layout>

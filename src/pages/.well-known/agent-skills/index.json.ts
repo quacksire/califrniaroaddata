@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 
 export const prerender = false;
 
-const SKILL_DIGEST = "sha256:6fa0143b7f15ded087fee1e397dae5bb45573a2007b6edb042d9fc5654a7fd5e";
+const SKILL_DIGEST = "sha256:2eb1d0f7d3b5a6d03004fe0f486acd726bf2087f0cfbeb13ec0b5ebce1952157";
 
 export const GET: APIRoute = ({ url }) => {
 	const index = {
@@ -12,7 +12,7 @@ export const GET: APIRoute = ({ url }) => {
 				name: "california-road-data",
 				type: "skill-md",
 				description:
-					"Query current public Caltrans road data through the California Road Data API or MCP server.",
+					"Find current California road conditions through the California Road Data API or MCP server.",
 				url: `${url.origin}/.well-known/agent-skills/california-road-data/SKILL.md`,
 				digest: SKILL_DIGEST,
 			},

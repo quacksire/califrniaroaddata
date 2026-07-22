@@ -12,7 +12,7 @@ const { title } = Astro.props;
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="description" content="Caltrans Road Data Explorer" />
+		<meta name="description" content="California Road Data Explorer" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
@@ -35,14 +35,6 @@ const { title } = Astro.props;
 						>
 							Home
 						</a>
-						<a
-							href="https://cwwp2.dot.ca.gov"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black hover:text-white transition-colors"
-						>
-							Source
-						</a>
 					</div>
 				</div>
 			</div>
@@ -62,49 +54,38 @@ const { title } = Astro.props;
 			const districtSchema = {
 				type: "string",
 				pattern: "^(0[1-9]|1[0-2])$",
-				description: "Two-digit Caltrans district identifier.",
+				description: "Two-digit California Road Data district identifier.",
 			};
 
 			const tools = [
 				{
-					name: "get_caltrans_data",
+					name: "get_road_data_resource",
 					description:
-						"Use the California Road Data API layer to read current public Caltrans road data for a source and district.",
+						"Get the canonical digestible California Road Data Explorer resource for a category and district.",
 					inputSchema: {
 						type: "object",
 						properties: {
 							type: { type: "string", enum: dataTypes },
 							district: districtSchema,
-							limit: {
-								type: "integer",
-								minimum: 1,
-								maximum: 200,
-								default: 50,
-							},
 						},
 						required: ["type", "district"],
 						additionalProperties: false,
 					},
-					annotations: { readOnlyHint: true, untrustedContentHint: true },
-					execute: async ({ type, district, limit = 50 }: any) => {
-						const response = await fetch(
-							`/api/caltrans/${encodeURIComponent(type)}/${encodeURIComponent(district)}`,
-						);
-						if (!response.ok) {
-							throw new Error(`Road data request failed (${response.status}).`);
-						}
-
-						const payload = await response.json();
-						const records = Array.isArray(payload.data)
-							? payload.data.slice(0, Math.min(200, Math.max(1, Number(limit) || 50)))
-							: payload;
-						return { type, district, records };
+					annotations: { readOnlyHint: true },
+					execute: ({ type, district }: any) => {
+						const path = `/${encodeURIComponent(type)}/${encodeURIComponent(district)}`;
+						return {
+							type,
+							district,
+							url: new URL(path, window.location.origin).href,
+							mediaType: "text/html",
+						};
 					},
 				},
 				{
-					name: "open_caltrans_explorer",
+					name: "open_road_data_explorer",
 					description:
-						"Open the California Road Data explorer for a source and district.",
+						"Open the digestible California Road Data Explorer for a category and district.",
 					inputSchema: {
 						type: "object",
 						properties: {
@@ -136,10 +117,6 @@ const { title } = Astro.props;
 			<div
 				class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-black text-sm"
 			>
-				<p>
-					Data provided by Caltrans. Not affiliated with the
-					California Department of Transportation.
-				</p>
 				<p class="mt-2">
 					<a
 						href="https://quacksire.dev"

@@ -7,7 +7,7 @@ export const GET: APIRoute = ({ url }) =>
 		JSON.stringify(
 			{
 				status: "ok",
-				service: "California Road Data API",
+				service: "California Road Data Explorer API",
 				time: new Date().toISOString(),
 				links: {
 					openapi: `${url.origin}/openapi.json`,

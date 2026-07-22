@@ -1,13 +1,12 @@
 import type { APIRoute } from "astro";
 import {
 	DATA_TYPE_IDS,
-	CaltransUpstreamError,
-	fetchCaltransData,
+	getExplorerResource,
+	getRoadDataApiMetadata,
 	isDataType,
 	normalizeDistrict,
 	supportsDistrict,
-} from "../lib/caltrans-api";
-import { DATA_TYPES } from "../utils/caltrans";
+} from "../lib/road-data-api";
 
 export const prerender = false;
 
@@ -28,9 +27,9 @@ type JsonRpcRequest = {
 
 const tools = [
 	{
-		name: "list_data_sources",
+		name: "list_road_data_categories",
 		description:
-			"List the public Caltrans road-condition feeds and the districts where each is available.",
+			"List California Road Data Explorer categories and the districts where each is available.",
 		inputSchema: {
 			type: "object",
 			properties: {},
@@ -39,9 +38,9 @@ const tools = [
 		annotations: { readOnlyHint: true },
 	},
 	{
-		name: "get_caltrans_data",
+		name: "open_road_data_explorer",
 		description:
-			"Use the California Road Data API layer to read current public Caltrans road data for a source and district. Results are capped to keep the response usable.",
+			"Get the canonical, digestible California Road Data Explorer resource for a category and district.",
 		inputSchema: {
 			type: "object",
 			properties: {
@@ -49,19 +48,12 @@ const tools = [
 					type: "string",
 					enum: DATA_TYPE_IDS,
 					description:
-						"cctv, cms, cc, lcs, rwis, or tt. See list_data_sources for descriptions.",
+						"cctv, cms, cc, lcs, rwis, or tt. See list_road_data_categories for details.",
 				},
 				district: {
 					type: "string",
 					pattern: "^(0[1-9]|1[0-2])$",
-					description: "Two-digit Caltrans district identifier.",
-				},
-				limit: {
-					type: "integer",
-					minimum: 1,
-					maximum: 200,
-					default: 50,
-					description: "Maximum number of feed records to return.",
+					description: "Two-digit California Road Data district identifier.",
 				},
 			},
 			required: ["type", "district"],
@@ -89,19 +81,16 @@ function jsonRpcResponse(
 	sessionId?: string,
 	status = 200,
 ) {
-	return new Response(
-		JSON.stringify({ jsonrpc: "2.0", id, result }),
-		{
-			status,
-			headers: {
-				...corsHeaders,
-				"Cache-Control": "no-store",
-				"Content-Type": "application/json; charset=utf-8",
-				"Mcp-Protocol-Version": PROTOCOL_VERSION,
-				...(sessionId ? { "Mcp-Session-Id": sessionId } : {}),
-			},
+	return new Response(JSON.stringify({ jsonrpc: "2.0", id, result }), {
+		status,
+		headers: {
+			...corsHeaders,
+			"Cache-Control": "no-store",
+			"Content-Type": "application/json; charset=utf-8",
+			"Mcp-Protocol-Version": PROTOCOL_VERSION,
+			...(sessionId ? { "Mcp-Session-Id": sessionId } : {}),
 		},
-	);
+	});
 }
 
 function jsonRpcError(
@@ -124,23 +113,7 @@ function jsonRpcError(
 	);
 }
 
-function readLimit(value: unknown): number {
-	if (typeof value !== "number" || !Number.isFinite(value)) {
-		return 50;
-	}
-
-	return Math.min(200, Math.max(1, Math.floor(value)));
-}
-
-function getSourceList() {
-	return DATA_TYPE_IDS.map((id) => ({
-		id,
-		name: DATA_TYPES[id].name,
-		districts: [...DATA_TYPES[id].districts],
-	}));
-}
-
-async function callTool(params: unknown) {
+async function callTool(params: unknown, origin: string) {
 	if (!isRecord(params) || typeof params.name !== "string") {
 		return {
 			isError: true,
@@ -150,15 +123,15 @@ async function callTool(params: unknown) {
 
 	const argumentsObject = isRecord(params.arguments) ? params.arguments : {};
 
-	if (params.name === "list_data_sources") {
+	if (params.name === "list_road_data_categories") {
 		return {
 			content: [
 				{
 					type: "text",
 					text: JSON.stringify(
 						{
-							sources: getSourceList(),
-							documentation: "https://californiaroaddata.com/docs/api",
+							categories: getRoadDataApiMetadata(origin).dataTypes,
+							documentation: `${origin}/docs/api`,
 						},
 						null,
 						2,
@@ -168,7 +141,7 @@ async function callTool(params: unknown) {
 		};
 	}
 
-	if (params.name !== "get_caltrans_data") {
+	if (params.name !== "open_road_data_explorer") {
 		return {
 			isError: true,
 			content: [{ type: "text", text: `Unknown tool: ${params.name}` }],
@@ -194,45 +167,22 @@ async function callTool(params: unknown) {
 		};
 	}
 
-	try {
-		const { data, source, lastModified } = await fetchCaltransData(type, district);
-		const limit = readLimit(argumentsObject.limit);
-		const records =
-			isRecord(data) && Array.isArray(data.data)
-				? data.data.slice(0, limit)
-				: data;
-
-		return {
-			content: [
-				{
-					type: "text",
-					text: JSON.stringify(
-						{
-							type,
-							district,
-							source,
-							lastModified,
-							records,
-						},
-						null,
-						2,
-					),
-				},
-			],
-			_meta: {
-				"californiaroaddata.com/untrusted-content": true,
+	const resource = getExplorerResource(origin, type, district);
+	return {
+		content: [
+			{
+				type: "resource_link",
+				uri: resource.url,
+				name: `${resource.name}: ${resource.type.toUpperCase()} District ${resource.district}`,
+				description: resource.description,
+				mimeType: resource.mediaType,
 			},
-		};
-	} catch (error) {
-		const message =
-			error instanceof CaltransUpstreamError
-				? error.message
-				: "Unable to retrieve Caltrans data.";
-		return {
-			isError: true,
-			content: [{ type: "text", text: message }],
-		};
-	}
+			{
+				type: "text",
+				text: `Open ${resource.url}`,
+			},
+		],
+	};
 }
 
 export const OPTIONS: APIRoute = () =>
@@ -244,7 +194,7 @@ export const GET: APIRoute = () =>
 		headers: { ...corsHeaders, Allow: "POST, OPTIONS" },
 	});
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, url }) => {
 	if (!request.headers.get("content-type")?.includes("application/json")) {
 		return jsonRpcError(null, -32600, "Content-Type must be application/json.", 415);
 	}
@@ -282,7 +232,7 @@ export const POST: APIRoute = async ({ request }) => {
 				capabilities: { tools: { listChanged: false } },
 				serverInfo: SERVER_INFO,
 				instructions:
-					"California Road Data is a public, read-only API layer for Caltrans road data. Results can change quickly.",
+					"California Road Data is a public, read-only explorer API. Road conditions can change quickly.",
 			},
 			crypto.randomUUID(),
 		);
@@ -311,7 +261,7 @@ export const POST: APIRoute = async ({ request }) => {
 			return jsonRpcError(id, -32600, "Mcp-Name does not match the request body.", 400);
 		}
 
-		return jsonRpcResponse(id, await callTool(rpc.params));
+		return jsonRpcResponse(id, await callTool(rpc.params, url.origin));
 	}
 
 	return jsonRpcError(id, -32601, `Method not found: ${rpc.method}`);

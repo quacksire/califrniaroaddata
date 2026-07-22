@@ -6,11 +6,11 @@ export const GET: APIRoute = ({ url }) => {
 	const card = {
 		$schema:
 			"https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
-		name: "californiaroaddata.com/caltrans-road-data",
+		name: "californiaroaddata.com/california-road-data",
 		version: "1.0.0",
 		title: "California Road Data Explorer",
 		description:
-			"California Road Data's read-only API layer for live Caltrans road-condition data by district.",
+			"California Road Data's read-only API layer for digestible live road-condition data by district.",
 		websiteUrl: url.origin,
 		repository: {
 			url: "https://github.com/quacksire/califrniaroaddata",

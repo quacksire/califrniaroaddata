@@ -162,7 +162,7 @@ export async function GET() {
 # California Road Data - LLM Navigation Guide
 
 ## Overview
-This service provides real-time traffic data from Caltrans.
+This service provides digestible, real-time California road data.
 Use the following URL patterns to locate specific resources.
 
 ## URL Patterns

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { DATA_TYPE_IDS } from "../lib/caltrans-api";
+import { DATA_TYPE_IDS } from "../lib/road-data-api";
 
 export const prerender = false;
 
@@ -10,7 +10,7 @@ export const GET: APIRoute = ({ url }) => {
 			title: "California Road Data API",
 			version: "1.0.0",
 			description:
-				"California Road Data is the read-only, unauthenticated API layer for current public Caltrans road-condition data.",
+				"A read-only navigation API for California Road Data's digestible road-condition explorer. It returns canonical Explorer resources rather than raw feed records.",
 		},
 		servers: [{ url: url.origin }],
 		paths: {
@@ -21,9 +21,7 @@ export const GET: APIRoute = ({ url }) => {
 						"200": {
 							description: "The API is available.",
 							content: {
-								"application/json": {
-									schema: { type: "object" },
-								},
+								"application/json": { schema: { type: "object" } },
 							},
 						},
 					},
@@ -31,24 +29,22 @@ export const GET: APIRoute = ({ url }) => {
 			},
 			"/api/metadata": {
 				get: {
-					summary: "List available Caltrans data types and districts",
+					summary: "List available road-data categories and districts",
 					responses: {
 						"200": {
-							description: "Supported data sources.",
+							description: "Supported Explorer categories.",
 							content: {
-								"application/json": {
-									schema: { type: "object" },
-								},
+								"application/json": { schema: { type: "object" } },
 							},
 						},
 					},
 				},
 			},
-			"/api/caltrans/{type}/{district}": {
+			"/api/explorer/{type}/{district}": {
 				get: {
-					summary: "Retrieve a current Caltrans district data feed",
+					summary: "Get a canonical digestible Explorer resource",
 					description:
-						"Returns the public Caltrans JSON feed unchanged. Responses are cached briefly because these data are live.",
+						"Returns the canonical California Road Data Explorer view for a category and district. This endpoint does not return raw records.",
 					parameters: [
 						{
 							name: "type",
@@ -63,20 +59,27 @@ export const GET: APIRoute = ({ url }) => {
 							in: "path",
 							required: true,
 							schema: { type: "string", pattern: "^(0[1-9]|1[0-2])$" },
-							description: "Two-digit Caltrans district identifier.",
+							description: "Two-digit California Road Data district identifier.",
 						},
 					],
 					responses: {
 						"200": {
-							description: "Current Caltrans feed.",
+							description: "A canonical Explorer resource.",
 							content: {
 								"application/json": {
-									schema: { type: "object", additionalProperties: true },
+									schema: {
+										type: "object",
+										properties: {
+											resource: {
+												type: "object",
+												required: ["name", "type", "district", "url", "mediaType"],
+											},
+										},
+									},
 								},
 							},
 						},
 						"400": { description: "Unsupported data type or district." },
-						"502": { description: "Caltrans source is unavailable." },
 					},
 				},
 			},
