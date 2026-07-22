@@ -1,169 +1,16 @@
-import {
-    DATA_TYPES,
-    slugify,
-    getHighwayFromItem,
-    getCounties,
-} from "../utils/caltrans";
+import { COUNTIES, ROUTES } from "../data/locations";
+import { DATA_TYPES, slugify } from "../utils/caltrans";
 import { site } from "astro:config/server";
-
 
 export const prerender = true;
 
-function tryParseJSON(text: string) {
-    // First, try the native JSON parse
-    try {
-        return JSON.parse(text);
-    } catch (err) {
-        // Try some common sanitizations: remove BOM, control chars
-        let cleaned = text.replace(/^\uFEFF/, "");
-        cleaned = cleaned.replace(/\0/g, "");
-
-        // Remove trailing commas before } or ]
-        cleaned = cleaned.replace(/,\s*([}\]])/g, "$1");
-
-        try {
-            return JSON.parse(cleaned);
-        } catch (err2) {
-            // As a last resort, try to locate the "data" array by scanning
-            // for the first '[' after the "data" key and match brackets while
-            // respecting quoted strings and escapes.
-            const key = '"data"';
-            const keyIdx = cleaned.indexOf(key);
-            if (keyIdx === -1) throw err;
-
-            // Find the first '[' after the key
-            let i = cleaned.indexOf('[', keyIdx);
-            if (i === -1) throw err;
-
-            // Scan forward to find matching closing bracket
-            let depth = 0;
-            let inString = false;
-            let escape = false;
-            let startIdx = -1;
-            let endIdx = -1;
-
-            for (let pos = i; pos < cleaned.length; pos++) {
-                const ch = cleaned[pos];
-
-                if (escape) {
-                    escape = false;
-                    continue;
-                }
-
-                if (ch === '\\') {
-                    escape = true;
-                    continue;
-                }
-
-                if (ch === '"') {
-                    inString = !inString;
-                    continue;
-                }
-
-                if (inString) continue;
-
-                if (ch === '[') {
-                    if (depth === 0) startIdx = pos;
-                    depth++;
-                    continue;
-                }
-
-                if (ch === ']') {
-                    depth--;
-                    if (depth === 0) {
-                        endIdx = pos;
-                        break;
-                    }
-                }
-            }
-
-            if (startIdx === -1 || endIdx === -1) throw err;
-
-            const arrayText = cleaned.slice(startIdx, endIdx + 1);
-            try {
-                return { data: JSON.parse(arrayText) };
-            } catch (err3) {
-                // give up and rethrow the original parse error
-                throw err;
-            }
-        }
-    }
-}
-
-export async function GET() {
-    // 1. Fetch all data to build catalogs
-    const allCounties = new Set<string>();
-    const allHighways = new Set<string>();
-
-    // We only need to check one type (e.g. CCTV or LCS) to get most locations,
-    // but better to check all to be comprehensive?
-    // Checking ALL types might be slow build-time, but fine for static site.
-    // Let's iterate all types.
-
-    for (const type of Object.values(DATA_TYPES)) {
-        for (const districtId of type.districts) {
-            const url = type.url(districtId);
-            try {
-                const res = await fetch(url);
-                if (!res.ok) {
-                    console.warn(`[llms.txt] Non-OK response ${res.status} for ${url}`);
-                    // small throttle even on error to be polite
-                    await new Promise((r) => setTimeout(r, 50));
-                    continue;
-                }
-
-                const text = await res.text();
-                // Detect HTML or empty responses
-                if (!text || text.trim().startsWith("<")) {
-                    console.warn(`[llms.txt] Skipping non-JSON/empty response for ${url}`);
-                    await new Promise((r) => setTimeout(r, 50));
-                    continue;
-                }
-
-                let json: any;
-                try {
-                    json = tryParseJSON(text);
-                } catch (e: any) {
-                    console.warn(`[llms.txt] JSON parse error for ${url}: ${e?.message || e}`);
-                    await new Promise((r) => setTimeout(r, 50));
-                    continue;
-                }
-
-                if (!json || !Array.isArray(json.data)) {
-                    // Not the expected shape
-                    await new Promise((r) => setTimeout(r, 50));
-                    continue;
-                }
-
-                for (const item of json.data) {
-                    // Collect Counties
-                    const counties = getCounties(item);
-                    counties.forEach(c => allCounties.add(c));
-
-                    // Collect Highways
-                    const highway = getHighwayFromItem(item);
-                    if (highway) allHighways.add(highway);
-                }
-
-                // small throttle so we don't hammer the API
-                await new Promise((r) => setTimeout(r, 50));
-            } catch (e) {
-                console.warn(`[llms.txt] Failed to fetch data: ${e}`);
-            }
-        }
-    }
-
-    const sortedCounties = Array.from(allCounties).sort();
-    const sortedHighways = Array.from(allHighways).sort();
-
-
-    // 2. Build the text content
-    const content = `
-# California Road Data - LLM Navigation Guide
+export function GET() {
+	const content = `
+# California Road Data - Navigation Guide
 
 ## Overview
-This service provides digestible, real-time California road data.
-Use the following URL patterns to locate specific resources.
+California Road Data provides digestible, real-time California road conditions.
+Use the following URL patterns to locate Explorer resources.
 
 ## URL Patterns
 
@@ -186,24 +33,25 @@ Districts: 01 through 12.
 
 ### Valid County Slugs
 (Use these in URLs)
-${sortedCounties.map(c => `- ${slugify(c)} (${c})`).join('\n')}
+${COUNTIES.map((county) => `- ${slugify(county)} (${county})`).join("\n")}
 
 ### Valid Highway Slugs
 (Use these in URLs)
-${sortedHighways.map(h => `- ${slugify(h)} (${h})`).join('\n')}
+${ROUTES.map((route) => `- ${slugify(route)} (${route})`).join("\n")}
 
 ## Data Types
-- cctv: Traffic Cameras (Images/Video)
-- cms: Changeable Message Signs (Text alerts)
-- cc: Chain Controls (Winter driving requirements)
-- lcs: Lane Closures (Construction/Maintenance)
-- rwis: Weather Stations (Temp, Wind, Visibility)
-- tt: Travel Times
+${Object.entries(DATA_TYPES)
+	.map(
+		([id, dataType]) =>
+			`- ${id}: ${dataType.name} (districts: ${dataType.districts.join(", ")})`,
+	)
+	.join("\n")}
 `.trim();
 
-    return new Response(content, {
-        headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-        }
-    });
+	return new Response(content, {
+		headers: {
+			"Cache-Control": "public, max-age=86400",
+			"Content-Type": "text/plain; charset=utf-8",
+		},
+	});
 }
